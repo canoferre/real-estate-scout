@@ -2,8 +2,11 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { WhoItsForSection } from "@/components/landing/WhoItsForSection";
 import { WhyScoutSection } from "@/components/landing/WhyScoutSection";
+import { TryItNowSection } from "@/components/landing/TryItNowSection";
+import { RoadmapSection } from "@/components/landing/RoadmapSection";
 import { BetaSignupSection } from "@/components/landing/BetaSignupSection";
 import { FAQSection } from "@/components/landing/FAQSection";
+import { ContactSection } from "@/components/landing/ContactSection";
 import { Footer } from "@/components/landing/Footer";
 
 const Index = () => {
@@ -13,8 +16,11 @@ const Index = () => {
       <HowItWorksSection />
       <WhoItsForSection />
       <WhyScoutSection />
+      <TryItNowSection />
+      <RoadmapSection />
       <BetaSignupSection />
       <FAQSection />
+      <ContactSection />
       <Footer />
     </main>
   );

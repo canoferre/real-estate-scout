@@ -36,29 +36,29 @@ export const BetaSignupSection = () => {
   };
 
   return (
-    <section id="signup" className="py-24 bg-primary">
+    <section id="signup" className="py-28 bg-primary">
       <div className="container px-6">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent-foreground mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent mb-6">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Zaprta beta</span>
+              <span className="text-sm font-semibold">Zaprta beta</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Prijavite se na beta
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-5">
+              Pridružite se beta programu
             </h2>
             <p className="text-lg text-primary-foreground/80">
-              Trenutno v zaprti beta fazi – prvih 30 uporabnikov dobi popoln dostop brezplačno.
+              Trenutno v zaprti beta fazi – prvih <span className="font-bold text-accent">30 uporabnikov</span> dobi popoln dostop popolnoma brezplačno.
             </p>
           </div>
           
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-primary-foreground/5 p-8 rounded-3xl border border-primary-foreground/10">
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-primary-foreground font-medium">
-                  Ime
+                  Ime in priimek
                 </Label>
                 <Input
                   id="name"
@@ -67,13 +67,13 @@ export const BetaSignupSection = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent"
+                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent h-12 rounded-xl"
                 />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-primary-foreground font-medium">
-                  E-pošta
+                  E-poštni naslov
                 </Label>
                 <Input
                   id="email"
@@ -83,7 +83,7 @@ export const BetaSignupSection = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent"
+                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent h-12 rounded-xl"
                 />
               </div>
             </div>
@@ -99,7 +99,7 @@ export const BetaSignupSection = () => {
                   placeholder="npr. Ljubljana, Maribor..."
                   value={formData.location}
                   onChange={handleChange}
-                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent"
+                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent h-12 rounded-xl"
                 />
               </div>
               
@@ -113,7 +113,7 @@ export const BetaSignupSection = () => {
                   placeholder="npr. 2-sobno, do 200k €"
                   value={formData.propertyType}
                   onChange={handleChange}
-                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent"
+                  className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent h-12 rounded-xl"
                 />
               </div>
             </div>
@@ -121,19 +121,23 @@ export const BetaSignupSection = () => {
             <Button 
               type="submit" 
               variant="accent" 
-              size="lg" 
+              size="xl" 
               className="w-full"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                "Pošiljam..."
+                "Pošiljam prijavo..."
               ) : (
                 <>
                   Prijavi se na beta
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 </>
               )}
             </Button>
+            
+            <p className="text-center text-primary-foreground/60 text-sm">
+              S prijavo se strinjate z obdelavo vaših podatkov za namen beta programa.
+            </p>
           </form>
         </div>
       </div>
