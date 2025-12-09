@@ -21,27 +21,19 @@ export async function onRequest({ request, env }) {
     }
 
     const { offer } = body;
-    const cfAccountId = env.CF_ACCOUNT_ID;
-    const cfApiToken = env.CF_API_TOKEN;
-    const cfModel = env.CF_AI_MODEL || '@cf/meta/llama-3-8b-instruct';
-    const hfToken = env.HF_API_TOKEN;
-    const hfModel = env.HF_MODEL || 'google/gemma-2-9b-it';
+    const groqApiKey = env.GROQ_API_KEY;
+    const groqModel = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
     const prompt = `Na kratko oceni, ali je nepremičnina dobra investicija. Uporabi slovenščino in odgovori v dveh kratkih stavkih z jedrnatim sklepom na koncu (DA/NE). Podatki: naslov: ${offer.title}, cena: ${offer.price} €, kvadratura: ${offer.area_m2} m², mesto: ${offer.city}, četrt: ${offer.district || '—'}, vir: ${offer.source}.`;
 
-    if (!hfToken && (!cfAccountId || !cfApiToken)) {
+    if (!groqApiKey) {
       return new Response(
-        JSON.stringify({
-          error:
-            'Manjkajo nastavitve za AI. Dodajte brezplačen HF_API_TOKEN (npr. za model google/gemma-2-9b-it) ali Cloudflare podatke.',
-        }),
+        JSON.stringify({ error: 'Manjka ključ GROQ_API_KEY za AI oceno.' }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    const summary = hfToken
-      ? await getHuggingFaceInsight({ prompt, token: hfToken, model: hfModel })
-      : await getCloudflareInsight({ prompt, accountId: cfAccountId, apiToken: cfApiToken, model: cfModel });
+    const summary = await getGroqInsight({ prompt, apiKey: groqApiKey, model: groqModel });
 
     if (!summary) {
       throw new Error('AI ni vrnil odgovora.');
@@ -57,32 +49,27 @@ export async function onRequest({ request, env }) {
   }
 }
 
-async function getCloudflareInsight({ prompt, accountId, apiToken, model }) {
-  if (!accountId || !apiToken) {
-    throw new Error('Manjkajo podatki za Cloudflare Workers AI (CF_ACCOUNT_ID ali CF_API_TOKEN).');
-  }
-
-  const aiResponse = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiToken}`
-      },
-      body: JSON.stringify({
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Si nepremičninski analitik. Odgovarjaj jedrnato v slovenščini, poudari razmerje cena/m², lokacijo in vire tveganja. Zaključi s sklepom DA/NE.'
-          },
-          { role: 'user', content: prompt }
-        ]
-      })
-    }
-  );
+async function getGroqInsight({ prompt, apiKey, model }) {
+  const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.4,
+      max_tokens: 180,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Si nepremičninski analitik. Odgovarjaj jedrnato v slovenščini, poudari razmerje cena/m², lokacijo in vire tveganja. Zaključi s sklepom DA/NE.'
+        },
+        { role: 'user', content: prompt }
+      ]
+    })
+  });
 
   if (!aiResponse.ok) {
     const errorText = await aiResponse.text();
@@ -90,32 +77,5 @@ async function getCloudflareInsight({ prompt, accountId, apiToken, model }) {
   }
 
   const data = await aiResponse.json();
-  return data?.result?.response?.trim();
-}
-
-async function getHuggingFaceInsight({ prompt, token, model }) {
-  const aiResponse = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 180,
-        temperature: 0.4,
-        return_full_text: false
-      }
-    })
-  });
-
-  if (!aiResponse.ok) {
-    const errorText = await aiResponse.text();
-    throw new Error(`HF AI napaka: ${errorText}`);
-  }
-
-  const data = await aiResponse.json();
-  const completion = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text;
-  return completion?.trim();
+  return data?.choices?.[0]?.message?.content?.trim();
 }
