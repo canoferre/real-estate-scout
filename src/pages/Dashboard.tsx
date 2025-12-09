@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
   fetchOffers,
@@ -13,6 +14,10 @@ import {
   saveOffer,
   removeSavedOffer,
   getOfferInsight,
+  SearchProfile,
+  loadSearchProfiles,
+  saveSearchProfiles,
+  getProfileInsight,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navbar } from '@/components/Navbar';
@@ -151,10 +156,12 @@ export default function Dashboard() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [profiles, setProfiles] = useState<SearchProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
   const [insights, setInsights] = useState<Record<number, string>>({});
   const [insightLoading, setInsightLoading] = useState<Record<number, boolean>>({});
+  const [profileInsightLoading, setProfileInsightLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -189,6 +196,9 @@ export default function Dashboard() {
     if (isAuthenticated) {
       loadOffers();
       setSavedOfferIds(loadSavedOffers());
+      const storedProfiles = loadSearchProfiles();
+      setProfiles(storedProfiles);
+      setActiveProfileId(storedProfiles[0]?.id ?? null);
     }
   }, [isAuthenticated, toast]);
 
@@ -204,6 +214,72 @@ export default function Dashboard() {
           : 'Oglas je shranjen med priljubljene.',
       });
 
+      return updated;
+    });
+  };
+
+  const persistProfiles = (nextProfiles: SearchProfile[]) => {
+    const sanitized = saveSearchProfiles(nextProfiles);
+    setProfiles(sanitized);
+
+    if (sanitized.length && !sanitized.some((profile) => profile.id === activeProfileId)) {
+      setActiveProfileId(sanitized[0].id);
+    }
+  };
+
+  const handleProfileChange = (id: string) => {
+    setActiveProfileId(id);
+  };
+
+  const handleProfileFieldChange = (id: string, field: keyof SearchProfile, value: string | number | undefined) => {
+    setProfiles((current) => {
+      const updated = current.map((profile) =>
+        profile.id === id
+          ? {
+              ...profile,
+              [field]: typeof value === 'string' ? value : value ?? undefined,
+            }
+          : profile
+      );
+
+      saveSearchProfiles(updated);
+      return updated;
+    });
+  };
+
+  const handleAddProfile = () => {
+    setProfiles((current) => {
+      const nextIndex = current.length + 1;
+      const newProfile: SearchProfile = {
+        id: `profil-${Date.now()}`,
+        name: `Profil ${nextIndex}`,
+        searchTerm: '',
+        city: '',
+        district: '',
+        source: '',
+        priorities: '',
+      };
+
+      const updated = [...current, newProfile];
+      saveSearchProfiles(updated);
+      setActiveProfileId(newProfile.id);
+      return updated;
+    });
+  };
+
+  const handleDeleteProfile = (id: string) => {
+    setProfiles((current) => {
+      if (current.length === 1) {
+        toast({
+          title: 'Ni mogoče izbrisati',
+          description: 'Vsaj en profil mora ostati.',
+          variant: 'destructive',
+        });
+        return current;
+      }
+
+      const updated = current.filter((profile) => profile.id !== id);
+      persistProfiles(updated);
       return updated;
     });
   };
@@ -226,17 +302,64 @@ export default function Dashboard() {
     }
   };
 
+  const handleProfileInsight = async (profile: SearchProfile) => {
+    setProfileInsightLoading(true);
+
+    try {
+      const summary = await getProfileInsight(profile);
+      setProfiles((current) => {
+        const updated = current.map((item) => (item.id === profile.id ? { ...item, aiSummary: summary } : item));
+        saveSearchProfiles(updated);
+        return updated;
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI povzetek profila ni uspel';
+      toast({
+        title: 'AI povzetek profila ni uspel',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setProfileInsightLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredOffers = normalizedSearch
-    ? offers.filter((offer) => {
-        const haystack = `${offer.title} ${offer.city} ${offer.district} ${offer.source}`.toLowerCase();
-        return haystack.includes(normalizedSearch);
-      })
-    : offers;
+  const activeProfile = profiles.find((profile) => profile.id === activeProfileId) || profiles[0];
+
+  const normalizedSearch = (activeProfile?.searchTerm || '').trim().toLowerCase();
+  const filteredOffers = offers.filter((offer) => {
+    const haystack = `${offer.title} ${offer.city} ${offer.district} ${offer.source}`.toLowerCase();
+
+    const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
+    const matchesCity = activeProfile?.city
+      ? offer.city.toLowerCase().includes(activeProfile.city.toLowerCase())
+      : true;
+    const matchesDistrict = activeProfile?.district
+      ? offer.district?.toLowerCase().includes(activeProfile.district.toLowerCase())
+      : true;
+    const matchesSource = activeProfile?.source
+      ? offer.source.toLowerCase().includes(activeProfile.source.toLowerCase())
+      : true;
+    const matchesMinPrice = activeProfile?.minPrice ? offer.price >= activeProfile.minPrice : true;
+    const matchesMaxPrice = activeProfile?.maxPrice ? offer.price <= activeProfile.maxPrice : true;
+    const matchesMinArea = activeProfile?.minArea ? offer.area_m2 >= activeProfile.minArea : true;
+    const matchesMaxArea = activeProfile?.maxArea ? offer.area_m2 <= activeProfile.maxArea : true;
+
+    return (
+      matchesSearch &&
+      matchesCity &&
+      matchesDistrict &&
+      matchesSource &&
+      matchesMinPrice &&
+      matchesMaxPrice &&
+      matchesMinArea &&
+      matchesMaxArea
+    );
+  });
 
   const bestOffers = getBestOffers(filteredOffers, 3);
   const latestOffers = filteredOffers.slice(0, 6);
@@ -248,39 +371,255 @@ export default function Dashboard() {
       <main className="min-h-screen bg-background pt-20 pb-12">
         <div className="container mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="mb-10 space-y-4">
+          <div className="mb-10 space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
-                  Trenutne ponudbe
-                </h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Trenutne ponudbe</h1>
                 <p className="text-muted-foreground text-lg">
-                  Preglejte najnovejše nepremičninske oglase, ki ustrezajo vašim kriterijem.
+                  Ustvari več iskalnih profilov z lastnimi filtri, prioritetami in AI povzetki.
                 </p>
               </div>
-              <div className="md:w-96">
-                <label className="text-sm text-muted-foreground mb-1 block" htmlFor="offer-search">
-                  Išči po naslovu, mestu ali viru
-                </label>
-                <div className="relative">
-                  <svg
-                    className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+              <div className="flex gap-2 flex-wrap justify-end">
+                {profiles.map((profile) => (
+                  <Button
+                    key={profile.id}
+                    variant={profile.id === activeProfileId ? 'default' : 'outline'}
+                    onClick={() => handleProfileChange(profile.id)}
+                    className="flex items-center gap-2"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.25 5.25a7.5 7.5 0 0011.4 11.4z" />
-                  </svg>
-                  <Input
-                    id="offer-search"
-                    placeholder="Vnesi iskalni niz"
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                  />
-                </div>
+                    <span className="font-semibold">{profile.name}</span>
+                    {profile.aiSummary && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wide">
+                        AI
+                      </span>
+                    )}
+                  </Button>
+                ))}
+                <Button variant="secondary" onClick={handleAddProfile}>
+                  + Nov profil
+                </Button>
               </div>
             </div>
+
+            {activeProfile && (
+              <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={activeProfile.name}
+                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'name', event.target.value)}
+                        className="max-w-xs font-semibold"
+                        aria-label="Ime profila"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteProfile(activeProfile.id)}
+                        aria-label="Izbriši profil"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M10 11v6m4-6v6M9 7l1-3h4l1 3m-9 0l-.5 12a2 2 0 002 2h7a2 2 0 002-2L18 7" />
+                        </svg>
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Nastavitve filtrov, prioritet in AI povzetek so vezani na ta profil.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => handleProfileInsight(activeProfile)}
+                      disabled={profileInsightLoading}
+                    >
+                      {profileInsightLoading ? (
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                          <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                      AI povzetek profila
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="offer-search">
+                      Išči po naslovu, mestu ali viru
+                    </label>
+                    <div className="relative">
+                      <svg
+                        className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.25 5.25a7.5 7.5 0 0011.4 11.4z" />
+                      </svg>
+                      <Input
+                        id="offer-search"
+                        placeholder="Vnesi iskalni niz"
+                        className="pl-10"
+                        value={activeProfile.searchTerm}
+                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'searchTerm', event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-city">
+                      Mesto
+                    </label>
+                    <Input
+                      id="profile-city"
+                      placeholder="npr. Ljubljana"
+                      value={activeProfile.city}
+                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'city', event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-district">
+                      Četrt / območje
+                    </label>
+                    <Input
+                      id="profile-district"
+                      placeholder="npr. Šiška"
+                      value={activeProfile.district}
+                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'district', event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-source">
+                      Vir oglasov
+                    </label>
+                    <Input
+                      id="profile-source"
+                      placeholder="npr. nepremicnine"
+                      value={activeProfile.source}
+                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'source', event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-min-price">
+                      Cena od (€)
+                    </label>
+                    <Input
+                      id="profile-min-price"
+                      type="number"
+                      min={0}
+                      placeholder="Minimalna cena"
+                      value={activeProfile.minPrice ?? ''}
+                      onChange={(event) =>
+                        handleProfileFieldChange(
+                          activeProfile.id,
+                          'minPrice',
+                          event.target.value ? Number(event.target.value) : undefined
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-max-price">
+                      Cena do (€)
+                    </label>
+                    <Input
+                      id="profile-max-price"
+                      type="number"
+                      min={0}
+                      placeholder="Maksimalna cena"
+                      value={activeProfile.maxPrice ?? ''}
+                      onChange={(event) =>
+                        handleProfileFieldChange(
+                          activeProfile.id,
+                          'maxPrice',
+                          event.target.value ? Number(event.target.value) : undefined
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-min-area">
+                      Kvadratura od (m²)
+                    </label>
+                    <Input
+                      id="profile-min-area"
+                      type="number"
+                      min={0}
+                      placeholder="Min m²"
+                      value={activeProfile.minArea ?? ''}
+                      onChange={(event) =>
+                        handleProfileFieldChange(
+                          activeProfile.id,
+                          'minArea',
+                          event.target.value ? Number(event.target.value) : undefined
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-max-area">
+                      Kvadratura do (m²)
+                    </label>
+                    <Input
+                      id="profile-max-area"
+                      type="number"
+                      min={0}
+                      placeholder="Max m²"
+                      value={activeProfile.maxArea ?? ''}
+                      onChange={(event) =>
+                        handleProfileFieldChange(
+                          activeProfile.id,
+                          'maxArea',
+                          event.target.value ? Number(event.target.value) : undefined
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2 lg:col-span-3">
+                    <label className="text-sm text-muted-foreground" htmlFor="profile-priorities">
+                      Prioritete in opombe profila
+                    </label>
+                    <Textarea
+                      id="profile-priorities"
+                      placeholder="Kaj je najpomembnejše (npr. bližina centra, dobra razmerje cena/m², novogradnja)?"
+                      value={activeProfile.priorities}
+                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'priorities', event.target.value)}
+                      className="min-h-[90px]"
+                    />
+                  </div>
+                </div>
+
+                {activeProfile.aiSummary && (
+                  <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+                        AI
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI povzetek profila</p>
+                        <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{activeProfile.aiSummary}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {isLoading ? (

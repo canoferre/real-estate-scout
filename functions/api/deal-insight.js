@@ -13,18 +13,20 @@ export async function onRequest({ request, env }) {
   try {
     const body = await request.json().catch(() => null);
 
-    if (!body || !body.offer) {
+    if (!body || (!body.offer && !body.profile)) {
       return new Response(
-        JSON.stringify({ error: 'Manjkajo podatki o oglasu za AI oceno.' }),
+        JSON.stringify({ error: 'Manjkajo podatki za AI oceno.' }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const { offer } = body;
+    const { offer, profile } = body;
     const groqApiKey = env.GROQ_API_KEY;
     const groqModel = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-    const prompt = `Na kratko oceni, ali je nepremičnina dobra investicija. Uporabi slovenščino in odgovori v dveh kratkih stavkih z jedrnatim sklepom na koncu (DA/NE). Podatki: naslov: ${offer.title}, cena: ${offer.price} €, kvadratura: ${offer.area_m2} m², mesto: ${offer.city}, četrt: ${offer.district || '—'}, vir: ${offer.source}.`;
+    const prompt = offer
+      ? `Na kratko oceni, ali je nepremičnina dobra investicija. Uporabi slovenščino in odgovori v dveh kratkih stavkih z jedrnatim sklepom na koncu (DA/NE). Podatki: naslov: ${offer.title}, cena: ${offer.price} €, kvadratura: ${offer.area_m2} m², mesto: ${offer.city}, četrt: ${offer.district || '—'}, vir: ${offer.source}.`
+      : `Pripravi AI povzetek za iskalni profil "${profile.name}". Uporabi slovenščino in v največ treh kratkih odstavkih povzetek: glavne filtre, prioritetne točke in ključne kriterije. Vključi izpostavljene lokacije (mesto: ${profile.city || 'katerokoli'}, četrt: ${profile.district || 'katerakoli'}), cenovni okvir (${profile.minPrice || 'brez'}–${profile.maxPrice || 'brez'} €) in velikost (${profile.minArea || 'brez'}–${profile.maxArea || 'brez'} m²). Zaključi s kratkim priporočilom, ali profil cilja na investicijo DA/NE in na kaj paziti. Prioritete: ${profile.priorities || 'ni podanih prioritet'}.`;
 
     if (!groqApiKey) {
       return new Response(

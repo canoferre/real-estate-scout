@@ -31,6 +31,21 @@ export interface DealInsightResponse {
   summary: string;
 }
 
+export interface SearchProfile {
+  id: string;
+  name: string;
+  searchTerm: string;
+  city?: string;
+  district?: string;
+  source?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minArea?: number;
+  maxArea?: number;
+  priorities?: string;
+  aiSummary?: string;
+}
+
 // Offers API
 export async function fetchOffers(): Promise<Offer[]> {
   const res = await fetch(`${API_URL}/api/offers`);
@@ -129,6 +144,17 @@ export function formatPrice(price: number): string {
 
 // Shranjene nepremičnine v localStorage
 const SAVED_OFFERS_KEY = "skavt_saved_offers";
+const SEARCH_PROFILES_KEY = "skavt_search_profiles";
+
+const defaultProfile = (): SearchProfile => ({
+  id: "profil-1",
+  name: "Privzeti profil",
+  searchTerm: "",
+  city: "",
+  district: "",
+  source: "",
+  priorities: "",
+});
 
 function getSavedOfferIds(): number[] {
   try {
@@ -145,6 +171,42 @@ function setSavedOfferIds(ids: number[]): void {
 
 export function loadSavedOffers(): number[] {
   return getSavedOfferIds();
+}
+
+function parseProfiles(raw: string | null): SearchProfile[] {
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export function loadSearchProfiles(): SearchProfile[] {
+  const stored = parseProfiles(localStorage.getItem(SEARCH_PROFILES_KEY));
+  if (stored.length === 0) {
+    const defaults = [defaultProfile()];
+    localStorage.setItem(SEARCH_PROFILES_KEY, JSON.stringify(defaults));
+    return defaults;
+  }
+  return stored;
+}
+
+export function saveSearchProfiles(profiles: SearchProfile[]): SearchProfile[] {
+  const sanitized = profiles.map((profile) => ({
+    ...profile,
+    searchTerm: profile.searchTerm || "",
+    city: profile.city || "",
+    district: profile.district || "",
+    source: profile.source || "",
+    priorities: profile.priorities || "",
+  }));
+
+  localStorage.setItem(SEARCH_PROFILES_KEY, JSON.stringify(sanitized));
+  return sanitized;
 }
 
 export function saveOffer(offerId: number): number[] {
@@ -175,6 +237,22 @@ export async function getOfferInsight(offer: Offer): Promise<string> {
 
   if (!res.ok) {
     throw new Error(data.error || "AI ocena trenutno ni na voljo");
+  }
+
+  return data.summary;
+}
+
+export async function getProfileInsight(profile: SearchProfile): Promise<string> {
+  const res = await fetch(`${API_URL}/api/deal-insight`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+
+  const data: DealInsightResponse & { error?: string } = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "AI povzetek profila trenutno ni na voljo");
   }
 
   return data.summary;
