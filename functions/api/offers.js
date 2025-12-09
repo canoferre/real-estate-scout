@@ -26,7 +26,7 @@ export async function onRequest({ env }) {
       `SELECT id, title, price, area_m2, city, district, source, url, created_at
        FROM offers
        ORDER BY datetime(created_at) DESC
-       LIMIT 50`
+       LIMIT 400`
     ).all();
 
     console.log(`Uspešno pridobljenih ${results.length} oglasov iz D1`);
