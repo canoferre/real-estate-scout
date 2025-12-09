@@ -26,3 +26,5 @@ CREATE TABLE IF NOT EXISTS offers (
 CREATE INDEX IF NOT EXISTS idx_offers_created_at ON offers(created_at);
 CREATE INDEX IF NOT EXISTS idx_offers_city ON offers(city);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+--
