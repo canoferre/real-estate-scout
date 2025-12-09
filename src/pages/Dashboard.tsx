@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fetchOffers, getBestOffers, formatPrice, calculatePricePerM2, Offer } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -99,8 +101,16 @@ export default function Dashboard() {
     return null;
   }
 
-  const bestOffers = getBestOffers(offers, 3);
-  const latestOffers = offers.slice(0, 6);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredOffers = normalizedSearch
+    ? offers.filter((offer) => {
+        const haystack = `${offer.title} ${offer.city} ${offer.district} ${offer.source}`.toLowerCase();
+        return haystack.includes(normalizedSearch);
+      })
+    : offers;
+
+  const bestOffers = getBestOffers(filteredOffers, 3);
+  const latestOffers = filteredOffers.slice(0, 6);
 
   return (
     <>
@@ -108,13 +118,39 @@ export default function Dashboard() {
       <main className="min-h-screen bg-background pt-20 pb-12">
         <div className="container mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
-              Trenutne ponudbe
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Preglejte najnovejše nepremičninske oglase, ki ustrezajo vašim kriterijem.
-            </p>
+          <div className="mb-10 space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+                  Trenutne ponudbe
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Preglejte najnovejše nepremičninske oglase, ki ustrezajo vašim kriterijem.
+                </p>
+              </div>
+              <div className="md:w-96">
+                <label className="text-sm text-muted-foreground mb-1 block" htmlFor="offer-search">
+                  Išči po naslovu, mestu ali viru
+                </label>
+                <div className="relative">
+                  <svg
+                    className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.25 5.25a7.5 7.5 0 0011.4 11.4z" />
+                  </svg>
+                  <Input
+                    id="offer-search"
+                    placeholder="Vnesi iskalni niz"
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
@@ -149,6 +185,16 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold text-foreground mb-2">Ni oglasov</h3>
               <p className="text-muted-foreground">
                 Trenutno ni na voljo nobenih oglasov. Preverite kasneje.
+              </p>
+            </div>
+          ) : filteredOffers.length === 0 ? (
+            <div className="bg-muted/50 border border-border rounded-xl p-12 text-center">
+              <svg className="w-16 h-16 text-muted-foreground mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.803 5.803a7.5 7.5 0 0010 10z" />
+              </svg>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Ni zadetkov</h3>
+              <p className="text-muted-foreground">
+                Spremenite iskalni niz ali izbrišite polje, da se prikažejo vse ponudbe.
               </p>
             </div>
           ) : (
