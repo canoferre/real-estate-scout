@@ -3,20 +3,54 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { fetchOffers, getBestOffers, formatPrice, calculatePricePerM2, Offer } from '@/lib/api';
+import {
+  fetchOffers,
+  getBestOffers,
+  formatPrice,
+  calculatePricePerM2,
+  Offer,
+  loadSavedOffers,
+  saveOffer,
+  removeSavedOffer,
+} from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navbar } from '@/components/Navbar';
 
-function OfferCard({ offer }: { offer: Offer }) {
+type OfferCardProps = {
+  offer: Offer;
+  isSaved: boolean;
+  onToggleSave: (offer: Offer) => void;
+};
+
+function OfferCard({ offer, isSaved, onToggleSave }: OfferCardProps) {
   const pricePerM2 = calculatePricePerM2(offer.price, offer.area_m2);
-  
+
   return (
     <div className="bg-card border border-border rounded-xl p-5 hover:border-accent/50 hover:shadow-lg transition-all duration-300">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="font-semibold text-foreground line-clamp-2">{offer.title}</h3>
-        <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground capitalize shrink-0 ml-2">
-          {offer.source}
-        </span>
+      <div className="flex justify-between items-start gap-3 mb-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-foreground line-clamp-2">{offer.title}</h3>
+          <span className="text-xs inline-flex mt-1 px-2 py-1 rounded-full bg-muted text-muted-foreground capitalize shrink-0">
+            {offer.source}
+          </span>
+        </div>
+        <Button
+          variant={isSaved ? 'default' : 'ghost'}
+          size="icon"
+          className={`shrink-0 ${isSaved ? 'bg-accent text-accent-foreground' : ''}`}
+          onClick={() => onToggleSave(offer)}
+          aria-label={isSaved ? 'Odstrani iz shranjenih' : 'Shrani nepremičnino'}
+        >
+          {isSaved ? (
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M5 4a2 2 0 00-2 2v15l9-4 9 4V6a2 2 0 00-2-2H5z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 00-2 2v13l9-4 9 4V7a2 2 0 00-2-2H5z" />
+            </svg>
+          )}
+        </Button>
       </div>
       
       <div className="space-y-2 mb-4">
@@ -61,6 +95,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -94,8 +129,25 @@ export default function Dashboard() {
 
     if (isAuthenticated) {
       loadOffers();
+      setSavedOfferIds(loadSavedOffers());
     }
   }, [isAuthenticated, toast]);
+
+  const handleToggleSave = (offer: Offer) => {
+    setSavedOfferIds((current) => {
+      const isAlreadySaved = current.includes(offer.id);
+      const updated = isAlreadySaved ? removeSavedOffer(offer.id) : saveOffer(offer.id);
+
+      toast({
+        title: isAlreadySaved ? 'Odstranjeno iz shranjenih' : 'Shranjeno',
+        description: isAlreadySaved
+          ? 'Oglas je bil odstranjen iz shranjenih.'
+          : 'Oglas je shranjen med priljubljene.',
+      });
+
+      return updated;
+    });
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -111,6 +163,7 @@ export default function Dashboard() {
 
   const bestOffers = getBestOffers(filteredOffers, 3);
   const latestOffers = filteredOffers.slice(0, 6);
+  const savedOffers = offers.filter((offer) => savedOfferIds.includes(offer.id));
 
   return (
     <>
@@ -199,6 +252,32 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
+              {savedOffers.length > 0 && (
+                <section className="mb-12">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-secondary/30 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-secondary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 00-2 2v13l9-4 9 4V7a2 2 0 00-2-2H5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Shranjene nepremičnine</h2>
+                      <p className="text-sm text-muted-foreground">Vaši izbrani oglasi</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {savedOffers.map((offer) => (
+                      <OfferCard
+                        key={`saved-${offer.id}`}
+                        offer={offer}
+                        isSaved
+                        onToggleSave={handleToggleSave}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {/* Najboljše priložnosti */}
               {bestOffers.length > 0 && (
                 <section className="mb-12">
@@ -215,7 +294,12 @@ export default function Dashboard() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {bestOffers.map((offer) => (
-                      <OfferCard key={`best-${offer.id}`} offer={offer} />
+                      <OfferCard
+                        key={`best-${offer.id}`}
+                        offer={offer}
+                        isSaved={savedOfferIds.includes(offer.id)}
+                        onToggleSave={handleToggleSave}
+                      />
                     ))}
                   </div>
                 </section>
@@ -236,7 +320,12 @@ export default function Dashboard() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {latestOffers.map((offer) => (
-                    <OfferCard key={`latest-${offer.id}`} offer={offer} />
+                    <OfferCard
+                      key={`latest-${offer.id}`}
+                      offer={offer}
+                      isSaved={savedOfferIds.includes(offer.id)}
+                      onToggleSave={handleToggleSave}
+                    />
                   ))}
                 </div>
               </section>

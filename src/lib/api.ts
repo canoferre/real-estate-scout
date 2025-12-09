@@ -122,3 +122,39 @@ export function getBestOffers(offers: Offer[], limit: number = 5): Offer[] {
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat('sl-SI').format(price) + ' €';
 }
+
+// Shranjene nepremičnine v localStorage
+const SAVED_OFFERS_KEY = "skavt_saved_offers";
+
+function getSavedOfferIds(): number[] {
+  try {
+    const saved = localStorage.getItem(SAVED_OFFERS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setSavedOfferIds(ids: number[]): void {
+  localStorage.setItem(SAVED_OFFERS_KEY, JSON.stringify(ids));
+}
+
+export function loadSavedOffers(): number[] {
+  return getSavedOfferIds();
+}
+
+export function saveOffer(offerId: number): number[] {
+  const ids = new Set(getSavedOfferIds());
+  ids.add(offerId);
+  const updated = Array.from(ids);
+  setSavedOfferIds(updated);
+  return updated;
+}
+
+export function removeSavedOffer(offerId: number): number[] {
+  const ids = new Set(getSavedOfferIds());
+  ids.delete(offerId);
+  const updated = Array.from(ids);
+  setSavedOfferIds(updated);
+  return updated;
+}
