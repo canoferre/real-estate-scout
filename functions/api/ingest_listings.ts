@@ -13,7 +13,15 @@ interface IncomingListing {
   price_eur?: number | null;
   size_m2?: number | null;
   url?: string;
-  first_seen?: string; // "YYYY-MM-DD HH:MM:SS"
+  first_seen?: string;
+}
+
+export async function onRequestGet() {
+  // za test v browserju
+  return new Response("Ingest endpoint OK. Uporabi POST za pošiljanje oglasov.", {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  });
 }
 
 export async function onRequestPost(context: {
@@ -22,7 +30,6 @@ export async function onRequestPost(context: {
 }): Promise<Response> {
   const { request, env } = context;
 
-  // 1) API key check
   const apiKey = request.headers.get("X-API-KEY");
   if (!apiKey || apiKey !== env.BACKEND_API_KEY) {
     return new Response("Unauthorized", { status: 401 });
@@ -42,31 +49,24 @@ export async function onRequestPost(context: {
     let inserted = 0;
 
     for (const item of items) {
-      if (!item.title || !item.url) {
-        continue;
-      }
+      if (!item.title || !item.url) continue;
 
       const title = item.title;
       const source = item.source ?? null;
       const city = item.city ?? null;
       const district = item.district ?? null;
-
-      // price_eur (float v Python) → price (INTEGER) v D1
       const price =
         typeof item.price_eur === "number"
           ? Math.round(item.price_eur)
           : null;
-
-      // size_m2 (float v Python) → area_m2 (INTEGER) v D1
       const area_m2 =
         typeof item.size_m2 === "number"
           ? Math.round(item.size_m2)
           : null;
-
       const url = item.url;
       const created_at = item.first_seen ?? null;
 
-      try {
+      try:
         await env.DB.prepare(
           `
           INSERT OR IGNORE INTO offers
@@ -77,22 +77,16 @@ export async function onRequestPost(context: {
           .bind(title, price, area_m2, city, district, source, url, created_at)
           .run();
 
-        // INSERT OR IGNORE ne vrne vedno števila vrstic,
-        // zato ne kompliciramo – štejemo poskus.
-        inserted++;
+        inserted += 1
       } catch (e) {
-        // Če en oglas pade, nadaljuj z ostalimi
         console.error("Insert error for URL:", url, e);
       }
     }
 
-    return new Response(
-      JSON.stringify({ inserted }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify({ inserted }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (e: any) {
     console.error("ingest_listings error:", e);
     return new Response(
