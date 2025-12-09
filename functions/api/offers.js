@@ -1,68 +1,47 @@
-const MOCK_OFFERS = [
-  {
-    id: 1,
-    title: "2-sobno stanovanje Šiška",
-    price: 215000,
-    area_m2: 52,
-    city: "Ljubljana",
-    district: "Šiška",
-    source: "nepremicnine",
-    url: "https://primer-oglasa-1"
-  },
-  {
-    id: 2,
-    title: "3-sobno stanovanje Bežigrad",
-    price: 285000,
-    area_m2: 68,
-    city: "Ljubljana",
-    district: "Bežigrad",
-    source: "bolha",
-    url: "https://primer-oglasa-2"
-  },
-  {
-    id: 3,
-    title: "Garsonjera Center",
-    price: 165000,
-    area_m2: 32,
-    city: "Ljubljana",
-    district: "Center",
-    source: "nepremicnine",
-    url: "https://primer-oglasa-3"
-  },
-  {
-    id: 4,
-    title: "4-sobno stanovanje Vič",
-    price: 385000,
-    area_m2: 95,
-    city: "Ljubljana",
-    district: "Vič",
-    source: "bolha",
-    url: "https://primer-oglasa-4"
-  },
-  {
-    id: 5,
-    title: "2-sobno stanovanje Moste",
-    price: 189000,
-    area_m2: 48,
-    city: "Ljubljana",
-    district: "Moste",
-    source: "nepremicnine",
-    url: "https://primer-oglasa-5"
-  },
-  {
-    id: 6,
-    title: "3-sobno stanovanje Maribor",
-    price: 175000,
-    area_m2: 72,
-    city: "Maribor",
-    district: "Center",
-    source: "bolha",
-    url: "https://primer-oglasa-6"
-  }
-];
+// TODO: Nastavi D1 binding z imenom "DB" v Cloudflare Pages nastavitvah
+// Settings → Functions → D1 database bindings → Variable name: DB
 
-export async function onRequest(context) {
-  return new Response(JSON.stringify(MOCK_OFFERS), {
-    headers: { "Content-Type": "application/json" }
-  });
+export async function onRequest({ env }) {
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    // Preveri, če je D1 binding nastavljen
+    if (!env.DB) {
+      console.error('D1 binding "DB" ni nastavljen');
+      return new Response(
+        JSON.stringify({
+          error: 'D1 baza ni povezana',
+          details: 'Prosimo, nastavite D1 binding z imenom "DB" v Cloudflare Pages nastavitvah.'
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT id, title, price, area_m2, city, district, source, url, created_at
+       FROM offers
+       ORDER BY datetime(created_at) DESC
+       LIMIT 50`
+    ).all();
+
+    console.log(`Uspešno pridobljenih ${results.length} oglasov iz D1`);
+
+    return new Response(JSON.stringify(results), {
+      headers: corsHeaders
+    });
+  } catch (err) {
+    console.error('Napaka pri branju iz D1:', err);
+    return new Response(
+      JSON.stringify({
+        error: 'Napaka pri branju iz D1 baze',
+        details: String(err)
+      }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
 }

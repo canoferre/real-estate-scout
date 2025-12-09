@@ -9,6 +9,7 @@ export interface Offer {
   district: string;
   source: string;
   url: string;
+  created_at?: string;
 }
 
 export interface HealthResponse {
@@ -16,10 +17,22 @@ export interface HealthResponse {
   message: string;
 }
 
+export interface AuthResponse {
+  token: string;
+  email: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+}
+
+// Offers API
 export async function fetchOffers(): Promise<Offer[]> {
   const res = await fetch(`${API_URL}/api/offers`);
   if (!res.ok) {
-    throw new Error("Napaka pri nalaganju oglasov");
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || "Napaka pri nalaganju oglasov");
   }
   return res.json();
 }
@@ -32,14 +45,80 @@ export async function apiHealth(): Promise<HealthResponse> {
   return res.json();
 }
 
+// Auth API
+export async function apiRegister(email: string, password: string): Promise<RegisterResponse> {
+  const res = await fetch(`${API_URL}/api/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  
+  const data = await res.json();
+  
+  if (!res.ok) {
+    throw new Error(data.error || "Napaka pri registraciji");
+  }
+  
+  return data;
+}
+
+export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_URL}/api/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  
+  const data = await res.json();
+  
+  if (!res.ok) {
+    throw new Error(data.error || "Nepravilni podatki za prijavo");
+  }
+  
+  return data;
+}
+
+// Token management
+const TOKEN_KEY = "skavt_token";
+const USER_EMAIL_KEY = "skavt_user_email";
+
+export function saveAuthToken(token: string, email: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_EMAIL_KEY, email);
+}
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getUserEmail(): string | null {
+  return localStorage.getItem(USER_EMAIL_KEY);
+}
+
+export function clearAuthToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_EMAIL_KEY);
+}
+
+export function isAuthenticated(): boolean {
+  return !!getAuthToken();
+}
+
 // Helper za izračun cene na m2
 export function calculatePricePerM2(price: number, area: number): number {
+  if (!area || area === 0) return 0;
   return Math.round(price / area);
 }
 
 // TODO: zamenjaj z /api/offers/best, ko bo baza pripravljena
 export function getBestOffers(offers: Offer[], limit: number = 5): Offer[] {
   return [...offers]
+    .filter(o => o.price && o.area_m2)
     .sort((a, b) => calculatePricePerM2(a.price, a.area_m2) - calculatePricePerM2(b.price, b.area_m2))
     .slice(0, limit);
+}
+
+// Formatiraj ceno
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat('sl-SI').format(price) + ' €';
 }

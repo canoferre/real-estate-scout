@@ -1,3 +1,4 @@
+import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { WhoItsForSection } from "@/components/landing/WhoItsForSection";
@@ -12,19 +13,22 @@ import { Footer } from "@/components/landing/Footer";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background">
-      <HeroSection />
-      <HowItWorksSection />
-      <WhoItsForSection />
-      <WhyScoutSection />
-      <TryItNowSection />
-      <OffersSection />
-      <RoadmapSection />
-      <BetaSignupSection />
-      <FAQSection />
-      <ContactSection />
-      <Footer />
-    </main>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-background pt-16">
+        <HeroSection />
+        <HowItWorksSection />
+        <WhoItsForSection />
+        <WhyScoutSection />
+        <TryItNowSection />
+        <OffersSection />
+        <RoadmapSection />
+        <BetaSignupSection />
+        <FAQSection />
+        <ContactSection />
+        <Footer />
+      </main>
+    </>
   );
 };
 
