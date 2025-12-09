@@ -158,6 +158,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<SearchProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [profilesOpen, setProfilesOpen] = useState(true);
   const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
   const [insights, setInsights] = useState<Record<number, string>>({});
   const [insightLoading, setInsightLoading] = useState<Record<number, boolean>>({});
@@ -379,30 +380,32 @@ export default function Dashboard() {
                   Ustvari več iskalnih profilov z lastnimi filtri, prioritetami in AI povzetki.
                 </p>
               </div>
-              <div className="flex gap-2 flex-wrap justify-end">
-                {profiles.map((profile) => (
-                  <Button
-                    key={profile.id}
-                    variant={profile.id === activeProfileId ? 'default' : 'outline'}
-                    onClick={() => handleProfileChange(profile.id)}
-                    className="flex items-center gap-2"
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setProfilesOpen((open) => !open)}
+                  aria-expanded={profilesOpen}
+                  aria-controls="profiles-panel"
+                >
+                  <svg
+                    className={`h-4 w-4 transition-transform ${profilesOpen ? 'rotate-180' : ''}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden
                   >
-                    <span className="font-semibold">{profile.name}</span>
-                    {profile.aiSummary && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wide">
-                        AI
-                      </span>
-                    )}
-                  </Button>
-                ))}
-                <Button variant="secondary" onClick={handleAddProfile}>
-                  + Nov profil
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span className="font-semibold">Iskalni profili</span>
                 </Button>
               </div>
             </div>
 
-            {activeProfile && (
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
+            {activeProfile && profilesOpen && (
+              <div className="bg-card border border-border rounded-2xl p-5 space-y-5" id="profiles-panel">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -426,6 +429,26 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground">
                       Nastavitve filtrov, prioritet in AI povzetek so vezani na ta profil.
                     </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    {profiles.map((profile) => (
+                      <Button
+                        key={profile.id}
+                        variant={profile.id === activeProfileId ? 'default' : 'outline'}
+                        onClick={() => handleProfileChange(profile.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="font-semibold">{profile.name}</span>
+                        {profile.aiSummary && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wide">
+                            AI
+                          </span>
+                        )}
+                      </Button>
+                    ))}
+                    <Button variant="secondary" onClick={handleAddProfile}>
+                      + Nov profil
+                    </Button>
                   </div>
                   <div className="flex gap-2">
                     <Button
