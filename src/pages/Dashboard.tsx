@@ -93,19 +93,47 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               className="text-primary"
               onClick={() => onEvaluate(offer)}
               disabled={isEvaluating}
+              aria-label="Pridobi AI oceno"
             >
-              {isEvaluating ? 'Pridobivam...' : 'Vprašaj AI'}
+              {isEvaluating ? (
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 3l2.09 4.23 4.66.68-3.38 3.29.8 4.6L12 13.98 7.83 15.8l.8-4.6-3.38-3.29 4.66-.68z"
+                  />
+                </svg>
+              )}
             </Button>
           </div>
 
           {insight && (
-            <p className="text-sm text-foreground/80 bg-muted/60 border border-border rounded-lg p-3">
-              {insight}
-            </p>
+            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 3l2.09 4.23 4.66.68-3.38 3.29.8 4.6L12 13.98 7.83 15.8l.8-4.6-3.38-3.29 4.66-.68z"
+                    />
+                  </svg>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
+                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
