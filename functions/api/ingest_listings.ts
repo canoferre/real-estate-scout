@@ -1,71 +1,106 @@
-export const onRequestPost = async (context) => {
-  const env = context.env;
+export interface Env {
+  DB: D1Database;
+  BACKEND_API_KEY: string;
+}
 
-  const clientKey = context.request.headers.get("X-API-KEY");
-  if (!clientKey || clientKey !== env.API_KEY) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+interface IncomingListing {
+  source?: string;
+  listing_id?: string;
+  title?: string;
+  location?: string;
+  city?: string | null;
+  district?: string | null;
+  price_eur?: number | null;
+  size_m2?: number | null;
+  url?: string;
+  first_seen?: string; // "YYYY-MM-DD HH:MM:SS"
+}
+
+export async function onRequestPost(context: {
+  request: Request;
+  env: Env;
+}): Promise<Response> {
+  const { request, env } = context;
+
+  // 1) API key check
+  const apiKey = request.headers.get("X-API-KEY");
+  if (!apiKey || apiKey !== env.BACKEND_API_KEY) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
-  let items;
   try {
-    items = await context.request.json();
-    if (!Array.isArray(items)) {
-      throw new Error("Payload must be an array");
+    const body = await request.json();
+    const items: IncomingListing[] = Array.isArray(body) ? body : [body];
+
+    if (!items.length) {
+      return new Response(JSON.stringify({ inserted: 0 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  } catch (err) {
+
+    let inserted = 0;
+
+    for (const item of items) {
+      if (!item.title || !item.url) {
+        continue;
+      }
+
+      const title = item.title;
+      const source = item.source ?? null;
+      const city = item.city ?? null;
+      const district = item.district ?? null;
+
+      // price_eur (float v Python) → price (INTEGER) v D1
+      const price =
+        typeof item.price_eur === "number"
+          ? Math.round(item.price_eur)
+          : null;
+
+      // size_m2 (float v Python) → area_m2 (INTEGER) v D1
+      const area_m2 =
+        typeof item.size_m2 === "number"
+          ? Math.round(item.size_m2)
+          : null;
+
+      const url = item.url;
+      const created_at = item.first_seen ?? null;
+
+      try {
+        await env.DB.prepare(
+          `
+          INSERT OR IGNORE INTO offers
+            (title, price, area_m2, city, district, source, url, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+        `,
+        )
+          .bind(title, price, area_m2, city, district, source, url, created_at)
+          .run();
+
+        // INSERT OR IGNORE ne vrne vedno števila vrstic,
+        // zato ne kompliciramo – štejemo poskus.
+        inserted++;
+      } catch (e) {
+        // Če en oglas pade, nadaljuj z ostalimi
+        console.error("Insert error for URL:", url, e);
+      }
+    }
+
     return new Response(
-      JSON.stringify({ error: "Invalid JSON", detail: err.message }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ inserted }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (e: any) {
+    console.error("ingest_listings error:", e);
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON or DB error", details: String(e) }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
-
-  let inserted = 0;
-
-  for (const item of items) {
-    try {
-      const {
-        title,
-        price,
-        area_m2,
-        city,
-        district,
-        source,
-        url,
-      } = item;
-
-      if (!title || !url) continue;
-
-      await env.DB.prepare(
-        `
-        INSERT INTO offers (title, price, area_m2, city, district, source, url)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        `
-      )
-        .bind(
-          String(title),
-          price ?? null,
-          area_m2 ?? null,
-          city ?? null,
-          district ?? null,
-          source ?? null,
-          String(url)
-        )
-        .run();
-
-      inserted++;
-    } catch (e) {
-      console.error("Insert error:", e);
-    }
-  }
-
-  return new Response(
-    JSON.stringify({ ok: true, received: items.length, inserted }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-};
+}
