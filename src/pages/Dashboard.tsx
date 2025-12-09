@@ -12,6 +12,7 @@ import {
   loadSavedOffers,
   saveOffer,
   removeSavedOffer,
+  getOfferInsight,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navbar } from '@/components/Navbar';
@@ -20,9 +21,12 @@ type OfferCardProps = {
   offer: Offer;
   isSaved: boolean;
   onToggleSave: (offer: Offer) => void;
+  insight?: string;
+  isEvaluating?: boolean;
+  onEvaluate: (offer: Offer) => void;
 };
 
-function OfferCard({ offer, isSaved, onToggleSave }: OfferCardProps) {
+function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEvaluate }: OfferCardProps) {
   const pricePerM2 = calculatePricePerM2(offer.price, offer.area_m2);
 
   return (
@@ -73,11 +77,42 @@ function OfferCard({ offer, isSaved, onToggleSave }: OfferCardProps) {
             <span className="text-xs text-muted-foreground">{formatPrice(pricePerM2)}/m²</span>
           )}
         </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
+                />
+              </svg>
+              <span>AI ocena posla</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary"
+              onClick={() => onEvaluate(offer)}
+              disabled={isEvaluating}
+            >
+              {isEvaluating ? 'Pridobivam...' : 'Vprašaj AI'}
+            </Button>
+          </div>
+
+          {insight && (
+            <p className="text-sm text-foreground/80 bg-muted/60 border border-border rounded-lg p-3">
+              {insight}
+            </p>
+          )}
+        </div>
       </div>
-      
-      <Button 
-        variant="outline" 
-        size="sm" 
+
+      <Button
+        variant="outline"
+        size="sm"
         className="w-full"
         onClick={() => window.open(offer.url, '_blank')}
       >
@@ -96,6 +131,8 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
+  const [insights, setInsights] = useState<Record<number, string>>({});
+  const [insightLoading, setInsightLoading] = useState<Record<number, boolean>>({});
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -147,6 +184,24 @@ export default function Dashboard() {
 
       return updated;
     });
+  };
+
+  const handleEvaluateOffer = async (offer: Offer) => {
+    setInsightLoading((prev) => ({ ...prev, [offer.id]: true }));
+
+    try {
+      const summary = await getOfferInsight(offer);
+      setInsights((prev) => ({ ...prev, [offer.id]: summary }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI ocena ni uspela';
+      toast({
+        title: 'AI ocena ni uspela',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setInsightLoading((prev) => ({ ...prev, [offer.id]: false }));
+    }
   };
 
   if (!isAuthenticated) {
@@ -272,6 +327,9 @@ export default function Dashboard() {
                         offer={offer}
                         isSaved
                         onToggleSave={handleToggleSave}
+                        insight={insights[offer.id]}
+                        isEvaluating={insightLoading[offer.id]}
+                        onEvaluate={handleEvaluateOffer}
                       />
                     ))}
                   </div>
@@ -299,6 +357,9 @@ export default function Dashboard() {
                         offer={offer}
                         isSaved={savedOfferIds.includes(offer.id)}
                         onToggleSave={handleToggleSave}
+                        insight={insights[offer.id]}
+                        isEvaluating={insightLoading[offer.id]}
+                        onEvaluate={handleEvaluateOffer}
                       />
                     ))}
                   </div>
@@ -325,6 +386,9 @@ export default function Dashboard() {
                       offer={offer}
                       isSaved={savedOfferIds.includes(offer.id)}
                       onToggleSave={handleToggleSave}
+                      insight={insights[offer.id]}
+                      isEvaluating={insightLoading[offer.id]}
+                      onEvaluate={handleEvaluateOffer}
                     />
                   ))}
                 </div>

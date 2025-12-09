@@ -27,6 +27,10 @@ export interface RegisterResponse {
   message: string;
 }
 
+export interface DealInsightResponse {
+  summary: string;
+}
+
 // Offers API
 export async function fetchOffers(): Promise<Offer[]> {
   const res = await fetch(`${API_URL}/api/offers`);
@@ -157,4 +161,21 @@ export function removeSavedOffer(offerId: number): number[] {
   const updated = Array.from(ids);
   setSavedOfferIds(updated);
   return updated;
+}
+
+// AI ocena posla
+export async function getOfferInsight(offer: Offer): Promise<string> {
+  const res = await fetch(`${API_URL}/api/deal-insight`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ offer }),
+  });
+
+  const data: DealInsightResponse & { error?: string } = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "AI ocena trenutno ni na voljo");
+  }
+
+  return data.summary;
 }
