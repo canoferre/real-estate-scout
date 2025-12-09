@@ -99,34 +99,28 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
               disabled={isEvaluating}
               aria-label="Pridobi AI oceno"
             >
-              {isEvaluating ? (
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 3l2.09 4.23 4.66.68-3.38 3.29.8 4.6L12 13.98 7.83 15.8l.8-4.6-3.38-3.29 4.66-.68z"
-                  />
-                </svg>
-              )}
+              <span
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
+                  isEvaluating ? 'opacity-70' : ''
+                }`}
+              >
+                {isEvaluating ? (
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  'AI'
+                )}
+              </span>
             </Button>
           </div>
 
           {insight && (
             <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 3l2.09 4.23 4.66.68-3.38 3.29.8 4.6L12 13.98 7.83 15.8l.8-4.6-3.38-3.29 4.66-.68z"
-                    />
-                  </svg>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+                  AI
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
