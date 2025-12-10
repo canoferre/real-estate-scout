@@ -48,8 +48,7 @@ export async function onRequest({ env, request }) {
                    SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at
                    FROM ranked_offers
                    WHERE row_num = 1
-                   ORDER BY datetime(created_at) DESC
-                   ${searchTerm ? '' : 'LIMIT 400'}`;
+                   ORDER BY datetime(created_at) DESC`;
 
     const statement = params.length ? env.DB.prepare(query).bind(...params) : env.DB.prepare(query);
 
