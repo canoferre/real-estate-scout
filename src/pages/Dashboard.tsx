@@ -298,6 +298,59 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
           )}
         </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
+                />
+              </svg>
+              <span>AI ocena posla</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-primary"
+              onClick={() => onEvaluate(offer)}
+              disabled={isEvaluating}
+              aria-label="Pridobi AI oceno"
+            >
+              <span
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
+                  isEvaluating ? 'opacity-70' : ''
+                }`}
+              >
+                {isEvaluating ? (
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  'AI'
+                )}
+              </span>
+            </Button>
+          </div>
+
+          {insight && (
+            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+                  AI
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
+                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <Button
@@ -321,7 +374,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<SearchProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
-  const [profilesOpen, setProfilesOpen] = useState(true);
+  const [profilesOpen, setProfilesOpen] = useState(false);
   const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
   const [insights, setInsights] = useState<Record<number, string>>({});
   const [insightLoading, setInsightLoading] = useState<Record<number, boolean>>({});
@@ -568,257 +621,278 @@ export default function Dashboard() {
             </div>
 
             {activeProfile && profilesOpen && (
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-5" id="profiles-panel">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={activeProfile.name}
-                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'name', event.target.value)}
-                        className="max-w-xs font-semibold"
-                        aria-label="Ime profila"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteProfile(activeProfile.id)}
-                        aria-label="Izbriši profil"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M10 11v6m4-6v6M9 7l1-3h4l1 3m-9 0l-.5 12a2 2 0 002 2h7a2 2 0 002-2L18 7" />
-                        </svg>
+              <div
+                className="rounded-3xl border border-border bg-gradient-to-br from-background via-background to-accent/5 p-6 shadow-xl"
+                id="profiles-panel"
+              >
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Iskalni profili</p>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          value={activeProfile.name}
+                          onChange={(event) => handleProfileFieldChange(activeProfile.id, 'name', event.target.value)}
+                          className="max-w-xs font-semibold"
+                          aria-label="Ime profila"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteProfile(activeProfile.id)}
+                          aria-label="Izbriši profil"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M10 11v6m4-6v6M9 7l1-3h4l1 3m-9 0l-.5 12a2 2 0 002 2h7a2 2 0 002-2L18 7" />
+                          </svg>
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Nastavitve filtrov, prioritet in AI povzetek so vezani na ta profil.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {profiles.map((profile) => (
+                        <Button
+                          key={profile.id}
+                          variant={profile.id === activeProfileId ? 'default' : 'outline'}
+                          onClick={() => handleProfileChange(profile.id)}
+                          className="flex items-center gap-2 rounded-full"
+                        >
+                          <span className="font-semibold">{profile.name}</span>
+                          {profile.aiSummary && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wide">
+                              AI
+                            </span>
+                          )}
+                        </Button>
+                      ))}
+                      <Button variant="secondary" onClick={handleAddProfile} className="rounded-full">
+                        + Nov profil
                       </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Nastavitve filtrov, prioritet in AI povzetek so vezani na ta profil.
-                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    {profiles.map((profile) => (
-                      <Button
-                        key={profile.id}
-                        variant={profile.id === activeProfileId ? 'default' : 'outline'}
-                        onClick={() => handleProfileChange(profile.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <span className="font-semibold">{profile.name}</span>
-                        {profile.aiSummary && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wide">
-                            AI
-                          </span>
-                        )}
-                      </Button>
-                    ))}
-                    <Button variant="secondary" onClick={handleAddProfile}>
-                      + Nov profil
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() => handleProfileInsight(activeProfile)}
-                      disabled={profileInsightLoading}
-                    >
-                      {profileInsightLoading ? (
-                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                          <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                        </svg>
-                      ) : (
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                      AI povzetek profila
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="offer-search">
-                      Išči po naslovu, mestu ali viru
-                    </label>
-                    <div className="relative">
-                      <svg
-                        className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.25 5.25a7.5 7.5 0 0011.4 11.4z" />
-                      </svg>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="offer-search">
+                        Išči po naslovu, mestu ali viru
+                      </label>
+                      <div className="relative mt-2">
+                        <svg
+                          className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.803 5.803a7.5 7.5 0 0010 10z" />
+                        </svg>
+                        <Input
+                          id="offer-search"
+                          placeholder="Npr. Koper, Ljubljana, nepremicnine.net"
+                          value={activeProfile.searchTerm}
+                          onChange={(event) => handleProfileFieldChange(activeProfile.id, 'searchTerm', event.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="city-filter">
+                        Mesto
+                      </label>
                       <Input
-                        id="offer-search"
-                        placeholder="Vnesi iskalni niz"
-                        className="pl-10"
-                        value={activeProfile.searchTerm}
-                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'searchTerm', event.target.value)}
+                        id="city-filter"
+                        placeholder="Ljubljana, Koper..."
+                        value={activeProfile.city}
+                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'city', event.target.value)}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="district-filter">
+                        Četrt / Ulica
+                      </label>
+                      <Input
+                        id="district-filter"
+                        placeholder="Šiška, Bežigrad..."
+                        value={activeProfile.district}
+                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'district', event.target.value)}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="source-filter">
+                        Vir
+                      </label>
+                      <Input
+                        id="source-filter"
+                        placeholder="nepremicnine, bolha..."
+                        value={activeProfile.source}
+                        onChange={(event) => handleProfileFieldChange(activeProfile.id, 'source', event.target.value)}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="min-price">
+                        Minimalna cena (€)
+                      </label>
+                      <Input
+                        id="min-price"
+                        type="number"
+                        placeholder="0"
+                        value={activeProfile.minPrice ?? ''}
+                        onChange={(event) =>
+                          handleProfileFieldChange(
+                            activeProfile.id,
+                            'minPrice',
+                            event.target.value ? Number(event.target.value) : undefined
+                          )
+                        }
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="max-price">
+                        Maksimalna cena (€)
+                      </label>
+                      <Input
+                        id="max-price"
+                        type="number"
+                        placeholder="300000"
+                        value={activeProfile.maxPrice ?? ''}
+                        onChange={(event) =>
+                          handleProfileFieldChange(
+                            activeProfile.id,
+                            'maxPrice',
+                            event.target.value ? Number(event.target.value) : undefined
+                          )
+                        }
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="min-area">
+                        Minimalna površina (m²)
+                      </label>
+                      <Input
+                        id="min-area"
+                        type="number"
+                        placeholder="0"
+                        value={activeProfile.minArea ?? ''}
+                        onChange={(event) =>
+                          handleProfileFieldChange(
+                            activeProfile.id,
+                            'minArea',
+                            event.target.value ? Number(event.target.value) : undefined
+                          )
+                        }
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="group rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm backdrop-blur">
+                      <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="max-area">
+                        Maksimalna površina (m²)
+                      </label>
+                      <Input
+                        id="max-area"
+                        type="number"
+                        placeholder="120"
+                        value={activeProfile.maxArea ?? ''}
+                        onChange={(event) =>
+                          handleProfileFieldChange(
+                            activeProfile.id,
+                            'maxArea',
+                            event.target.value ? Number(event.target.value) : undefined
+                          )
+                        }
+                        className="mt-2"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-city">
-                      Mesto
-                    </label>
-                    <Input
-                      id="profile-city"
-                      placeholder="npr. Ljubljana"
-                      value={activeProfile.city}
-                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'city', event.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-district">
-                      Četrt / območje
-                    </label>
-                    <Input
-                      id="profile-district"
-                      placeholder="npr. Šiška"
-                      value={activeProfile.district}
-                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'district', event.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-source">
-                      Vir oglasov
-                    </label>
-                    <Input
-                      id="profile-source"
-                      placeholder="npr. nepremicnine"
-                      value={activeProfile.source}
-                      onChange={(event) => handleProfileFieldChange(activeProfile.id, 'source', event.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-min-price">
-                      Cena od (€)
-                    </label>
-                    <Input
-                      id="profile-min-price"
-                      type="number"
-                      min={0}
-                      placeholder="Minimalna cena"
-                      value={activeProfile.minPrice ?? ''}
-                      onChange={(event) =>
-                        handleProfileFieldChange(
-                          activeProfile.id,
-                          'minPrice',
-                          event.target.value ? Number(event.target.value) : undefined
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-max-price">
-                      Cena do (€)
-                    </label>
-                    <Input
-                      id="profile-max-price"
-                      type="number"
-                      min={0}
-                      placeholder="Maksimalna cena"
-                      value={activeProfile.maxPrice ?? ''}
-                      onChange={(event) =>
-                        handleProfileFieldChange(
-                          activeProfile.id,
-                          'maxPrice',
-                          event.target.value ? Number(event.target.value) : undefined
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-min-area">
-                      Kvadratura od (m²)
-                    </label>
-                    <Input
-                      id="profile-min-area"
-                      type="number"
-                      min={0}
-                      placeholder="Min m²"
-                      value={activeProfile.minArea ?? ''}
-                      onChange={(event) =>
-                        handleProfileFieldChange(
-                          activeProfile.id,
-                          'minArea',
-                          event.target.value ? Number(event.target.value) : undefined
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-max-area">
-                      Kvadratura do (m²)
-                    </label>
-                    <Input
-                      id="profile-max-area"
-                      type="number"
-                      min={0}
-                      placeholder="Max m²"
-                      value={activeProfile.maxArea ?? ''}
-                      onChange={(event) =>
-                        handleProfileFieldChange(
-                          activeProfile.id,
-                          'maxArea',
-                          event.target.value ? Number(event.target.value) : undefined
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2 lg:col-span-3">
-                    <label className="text-sm text-muted-foreground" htmlFor="profile-priorities">
-                      Prioritete in opombe profila
+                  <div className="rounded-2xl border border-border/80 bg-background/80 p-5 shadow-sm backdrop-blur">
+                    <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground" htmlFor="priorities">
+                      Prioritete (opisno)
                     </label>
                     <Textarea
-                      id="profile-priorities"
-                      placeholder="Kaj je najpomembnejše (npr. bližina centra, dobra razmerje cena/m², novogradnja)?"
+                      id="priorities"
+                      placeholder="Kaj vam je pomembno? Lokacija, parkirišče, donosnost, ..."
                       value={activeProfile.priorities}
                       onChange={(event) => handleProfileFieldChange(activeProfile.id, 'priorities', event.target.value)}
-                      className="min-h-[90px]"
+                      className="mt-3"
                     />
                   </div>
-                </div>
 
-                {activeProfile.aiSummary && (
-                  <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                        AI
+                  <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background p-5 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2 text-sm text-primary/80">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+                        </svg>
+                        <span>AI povzetek profila za trenutne nastavitve</span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI povzetek profila</p>
-                        <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{activeProfile.aiSummary}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleProfileInsight(activeProfile)}
+                          disabled={profileInsightLoading}
+                          className="flex items-center gap-2"
+                        >
+                          {profileInsightLoading ? (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                              <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                          Generiraj AI povzetek
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleAddProfile()}>
+                          Nov prazen profil
+                        </Button>
                       </div>
                     </div>
+
+                    {activeProfile.aiSummary ? (
+                      <div className="mt-4 rounded-xl border border-primary/30 bg-background/90 p-4 text-sm leading-relaxed text-foreground/90 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70 mb-2">AI povzetek</p>
+                        <p className="whitespace-pre-line">{activeProfile.aiSummary}</p>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-muted-foreground">AI povzetek še ni ustvarjen</p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
-          </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <svg className="animate-spin h-10 w-10 text-accent mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p className="text-muted-foreground">Nalagam oglase...</p>
-              </div>
             </div>
-          ) : error ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-muted/40 px-6 py-12 text-center">
+                <svg className="h-10 w-10 animate-spin text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+                <div className="space-y-1">
+                  <p className="text-lg font-semibold text-foreground">Nalaganje ponudb</p>
+                  <p className="text-sm text-muted-foreground">Pridobivamo najnovejše oglase z vašimi kriteriji.</p>
+                </div>
+              </div>
+            ) : error ? (
             <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
               <svg className="w-12 h-12 text-destructive mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
