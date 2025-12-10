@@ -39,6 +39,39 @@ export const HeroSection = () => {
     },
   ];
 
+  const stats = [
+    { label: "Obveščeni v", value: "< 60 sekund" },
+    { label: "Spremljanih portalov", value: "7" },
+    { label: "Aktivnih filtrov", value: "250+" },
+  ];
+
+  const featuredListings = [
+    {
+      title: "Moderno stanovanje s teraso",
+      price: "389.000 €",
+      location: "Ljubljana - Vič",
+      image:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop",
+      tag: "Novo na trgu",
+    },
+    {
+      title: "Hiša z vrtom in garažo",
+      price: "520.000 €",
+      location: "Maribor - Studenci",
+      image:
+        "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?q=80&w=1600&auto=format&fit=crop",
+      tag: "Ekskluzivno",
+    },
+    {
+      title: "Svetlo 2-sobno stanovanje",
+      price: "265.000 €",
+      location: "Koper - Center",
+      image:
+        "https://images.unsplash.com/photo-1460472178825-e5240623afd5?q=80&w=1600&auto=format&fit=crop",
+      tag: "Obalno",
+    },
+  ];
+
   return (
     <>
       <div className="absolute top-10 left-10 w-72 h-72 bg-accent/10 rounded-full blur-3xl z-10" />
