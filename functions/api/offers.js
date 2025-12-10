@@ -1,7 +1,7 @@
 // TODO: Nastavi D1 binding z imenom "DB" v Cloudflare Pages nastavitvah
 // Settings → Functions → D1 database bindings → Variable name: DB
 
-export async function onRequest({ env }) {
+export async function onRequest({ env, request }) {
   // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -22,12 +22,35 @@ export async function onRequest({ env }) {
       );
     }
 
-    const { results } = await env.DB.prepare(
-      `SELECT id, title, price, area_m2, city, district, source, url, created_at
-       FROM offers
-       ORDER BY datetime(created_at) DESC
-       LIMIT 50`
-    ).all();
+    const { searchParams } = new URL(request.url);
+    const searchTerm = searchParams.get('q')?.trim().toLowerCase();
+
+    // Pick only one (latest) row per URL so the dashboard never renders duplicate cards or AI sections
+    // when the source table contains multiple entries for the same listing.
+    const params = [];
+    const baseWhere = searchTerm
+      ? `WHERE LOWER(title || ' ' || city || ' ' || district || ' ' || source) LIKE ?`
+      : '';
+
+    if (searchTerm) {
+      params.push(`%${searchTerm}%`);
+    }
+
+    const query = `WITH ranked_offers AS (
+                     SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at,
+                            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(url)) ORDER BY datetime(created_at) DESC, id DESC) AS row_num
+                     FROM offers
+                     ${baseWhere}
+                   )
+                   SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at
+                   FROM ranked_offers
+                   WHERE row_num = 1
+                   ORDER BY datetime(created_at) DESC
+                   ${searchTerm ? '' : 'LIMIT 400'}`;
+
+    const statement = params.length ? env.DB.prepare(query).bind(...params) : env.DB.prepare(query);
+
+    const { results } = await statement.all();
 
     console.log(`Uspešno pridobljenih ${results.length} oglasov iz D1`);
 
