@@ -25,8 +25,9 @@ export async function onRequest({ env, request }) {
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get('q')?.trim().toLowerCase();
 
-    // Pick only one (latest) row per URL so the dashboard never renders duplicate cards or AI sections
-    // when the source table contains multiple entries for the same listing.
+    // Pick only one (latest) row per listing. Some imports lack a URL, so we also fall back to a normalized
+    // title/city/district key to avoid duplicates that would otherwise render multiple "AI ocena posla" rows
+    // for the same property card on the dashboard.
     const params = [];
     const baseWhere = searchTerm
       ? `WHERE LOWER(title || ' ' || city || ' ' || district || ' ' || source) LIKE ?`
@@ -38,7 +39,9 @@ export async function onRequest({ env, request }) {
 
     const query = `WITH ranked_offers AS (
                      SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at,
-                            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(url)) ORDER BY datetime(created_at) DESC, id DESC) AS row_num
+                            COALESCE(NULLIF(LOWER(TRIM(url)), ''), LOWER(TRIM(title || '|' || city || '|' || COALESCE(district, '')))) AS dedupe_key,
+                            ROW_NUMBER() OVER (PARTITION BY COALESCE(NULLIF(LOWER(TRIM(url)), ''), LOWER(TRIM(title || '|' || city || '|' || COALESCE(district, ''))))
+                                               ORDER BY datetime(created_at) DESC, id DESC) AS row_num
                      FROM offers
                      ${baseWhere}
                    )
