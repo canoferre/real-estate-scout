@@ -314,13 +314,9 @@ export default function Dashboard() {
     return null;
   }
 
-  const normalizedSearch = (activeProfile?.searchTerm || '').trim().toLowerCase();
   const priceFilteredOffers = offers.filter((offer) => Number.isFinite(offer.price) && offer.price >= 5000);
 
   const filteredOffers = priceFilteredOffers.filter((offer) => {
-    const haystack = `${offer.title} ${offer.city} ${offer.district} ${offer.source}`.toLowerCase();
-
-    const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
     const matchesCity = activeProfile?.city
       ? offer.city.toLowerCase().includes(activeProfile.city.toLowerCase())
       : true;
@@ -336,7 +332,6 @@ export default function Dashboard() {
     const matchesMaxArea = activeProfile?.maxArea ? offer.area_m2 <= activeProfile.maxArea : true;
 
     return (
-      matchesSearch &&
       matchesCity &&
       matchesDistrict &&
       matchesSource &&
