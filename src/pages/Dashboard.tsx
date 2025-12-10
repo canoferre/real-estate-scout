@@ -35,18 +35,42 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
   const pricePerM2 = calculatePricePerM2(offer.price, offer.area_m2);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 hover:border-accent/50 hover:shadow-lg transition-all duration-300">
-      <div className="flex justify-between items-start gap-3 mb-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-foreground line-clamp-2">{offer.title}</h3>
-          <span className="text-xs inline-flex mt-1 px-2 py-1 rounded-full bg-muted text-muted-foreground capitalize shrink-0">
-            {offer.source}
-          </span>
-        </div>
+    <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-accent/50 hover:shadow-xl transition-all duration-300 group">
+      {/* Slika oglasa */}
+      <div className="relative aspect-[16/10] bg-muted overflow-hidden">
+        {offer.img_url ? (
+          <img
+            src={offer.img_url}
+            alt={offer.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+            <svg className="w-16 h-16 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} points="9,22 9,12 15,12 15,22" />
+            </svg>
+          </div>
+        )}
+        
+        {/* Oznaka vira */}
+        <span className="absolute top-3 left-3 text-xs px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm text-foreground font-medium capitalize shadow-sm">
+          {offer.source}
+        </span>
+        
+        {/* Gumb za shranjevanje */}
         <Button
-          variant={isSaved ? 'default' : 'ghost'}
+          variant="ghost"
           size="icon"
-          className={`shrink-0 ${isSaved ? 'bg-accent text-accent-foreground' : ''}`}
+          className={`absolute top-3 right-3 rounded-full backdrop-blur-sm shadow-sm ${
+            isSaved 
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90' 
+              : 'bg-background/90 text-foreground hover:bg-background'
+          }`}
           onClick={() => onToggleSave(offer)}
           aria-label={isSaved ? 'Odstrani iz shranjenih' : 'Shrani nepremičnino'}
         >
@@ -60,30 +84,37 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </svg>
           )}
         </Button>
-      </div>
-      
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="text-muted-foreground">
-            {offer.city}{offer.district ? `, ${offer.district}` : ''}
-          </span>
-        </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-lg font-bold text-accent">{formatPrice(offer.price)}</span>
-            <span className="text-sm text-muted-foreground">{offer.area_m2} m²</span>
+        {/* Cena overlay */}
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 pt-8">
+          <div className="flex items-end justify-between">
+            <span className="text-xl font-bold text-white drop-shadow-lg">{formatPrice(offer.price)}</span>
+            {pricePerM2 > 0 && (
+              <span className="text-sm text-white/80 drop-shadow">{formatPrice(pricePerM2)}/m²</span>
+            )}
           </div>
-          {pricePerM2 > 0 && (
-            <span className="text-xs text-muted-foreground">{formatPrice(pricePerM2)}/m²</span>
-          )}
+        </div>
+      </div>
+
+      {/* Vsebina kartice */}
+      <div className="p-4 space-y-3">
+        <div>
+          <h3 className="font-semibold text-foreground line-clamp-2 leading-tight mb-2">{offer.title}</h3>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <svg className="w-4 h-4 text-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="truncate">
+              {offer.city}{offer.district ? `, ${offer.district}` : ''}
+            </span>
+            <span className="text-border">•</span>
+            <span className="shrink-0">{offer.area_m2} m²</span>
+          </div>
         </div>
 
-        <div className="mt-3 space-y-2">
+        {/* AI ocena */}
+        <div className="pt-2 border-t border-border/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,18 +130,18 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             <Button
               variant="ghost"
               size="icon"
-              className="text-primary"
+              className="text-primary h-8 w-8"
               onClick={() => onEvaluate(offer)}
               disabled={isEvaluating}
               aria-label="Pridobi AI oceno"
             >
               <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[10px] font-semibold uppercase tracking-wide ${
                   isEvaluating ? 'opacity-70' : ''
                 }`}
               >
                 {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
                     <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
                   </svg>
@@ -122,32 +153,32 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
           </div>
 
           {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+            <div className="mt-3 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-3 shadow-sm">
+              <div className="flex items-start gap-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold uppercase tracking-wide">
                   AI
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
                   <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full"
-        onClick={() => window.open(offer.url, '_blank')}
-      >
-        Odpri oglas
-        <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
-      </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-2"
+          onClick={() => window.open(offer.url, '_blank')}
+        >
+          Odpri oglas
+          <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </Button>
+      </div>
     </div>
   );
 }
