@@ -8,7 +8,7 @@ const steps = [
   },
   {
     step: "2",
-    text: "Potrdite prijavo in nastavite kriterije",
+    text: "Vnesite kodo povabila in nastavite kriterije",
   },
   {
     step: "3",
@@ -17,8 +17,6 @@ const steps = [
 ];
 
 export const TryItNowSection = () => {
-  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
-
   const scrollToSignup = () => {
     document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -71,43 +69,8 @@ export const TryItNowSection = () => {
               Prijavi se na obvestila
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <div className="mt-4 flex flex-col items-center gap-3">
-              <div className="text-sm text-muted-foreground">ali</div>
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="border-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 min-w-[240px]"
-              >
-                <a href={googleAuthUrl} aria-label="Registracija z Google računom">
-                  <span className="flex items-center gap-2 justify-center">
-                    <span className="inline-flex items-center justify-center w-5 h-5 bg-white rounded-sm">
-                      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-3.5 h-3.5">
-                        <path
-                          fill="#EA4335"
-                          d="M12 10.2v3.6h5.1c-.2 1.2-.8 2.2-1.7 2.9l2.7 2.1c1.6-1.5 2.6-3.7 2.6-6.3 0-.6-.1-1.2-.2-1.8H12z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M6.6 14.3l-.9.7-2.1 1.6C5.4 19.9 8.5 22 12 22c2.4 0 4.4-.8 5.9-2.2l-2.7-2.1c-.7.5-1.6.8-2.7.8-2 0-3.8-1.3-4.4-3.1z"
-                        />
-                        <path
-                          fill="#4A90E2"
-                          d="M3.6 7.4 6.3 9.6c.6-1.8 2.4-3.1 4.4-3.1 1.3 0 2.5.4 3.4 1.3l2.6-2.6C15.9 3.3 14 2.6 12 2.6c-3.5 0-6.6 2.1-8.1 5z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="m12 10.2 2.8-2.2c-.4-.3-1-.6-1.7-.6-2 0-3.8 1.3-4.4 3.1l-2.7-2.2c-.3.6-.5 1.3-.5 2 0 .7.2 1.4.5 2l2.7-2.2c.6-1.8 2.4-3.1 4.4-3.1.7 0 1.3.2 1.7.6z"
-                        />
-                      </svg>
-                    </span>
-                    Registracija z Google
-                  </span>
-                </a>
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Popolnoma brezplačno • Brezplačen dostop v beta fazi
+            <p className="text-sm text-muted-foreground mt-6">
+              Registracija je možna samo s kodo povabila • Brezplačen dostop v beta fazi
             </p>
           </div>
         </div>

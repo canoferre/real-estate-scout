@@ -13,6 +13,7 @@ export const BetaSignupSection = () => {
     email: "",
     location: "",
     propertyType: "",
+    inviteCode: "",
   });
 
   const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
@@ -25,11 +26,11 @@ export const BetaSignupSection = () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
-      title: "Prijava uspešna! 🎉",
-      description: "Hvala za interes. Kmalu vas bomo kontaktirali.",
+      title: "Zahteva za povabilo poslana! 🎉",
+      description: "Hvala za interes. Povabilo boste prejeli na e-pošto, če izpolnjujete pogoje beta programa.",
     });
-    
-    setFormData({ name: "", email: "", location: "", propertyType: "" });
+
+    setFormData({ name: "", email: "", location: "", propertyType: "", inviteCode: "" });
     setIsSubmitting(false);
   };
 
@@ -45,13 +46,13 @@ export const BetaSignupSection = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent mb-6">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-semibold">Zaprta beta</span>
+              <span className="text-sm font-semibold">Zaprta beta (povabila)</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-5">
               Pridružite se beta programu
             </h2>
             <p className="text-lg text-primary-foreground/80">
-              Trenutno v zaprti beta fazi – prvih <span className="font-bold text-accent">30 uporabnikov</span> dobi popoln dostop popolnoma brezplačno.
+              Registracija je možna samo z vabilom. Prvih <span className="font-bold text-accent">30 uporabnikov</span> z vabilom dobi popoln dostop popolnoma brezplačno.
             </p>
           </div>
 
@@ -152,10 +153,25 @@ export const BetaSignupSection = () => {
                 />
               </div>
             </div>
-            
-            <Button 
-              type="submit" 
-              variant="accent" 
+
+            <div className="space-y-2">
+              <Label htmlFor="inviteCode" className="text-primary-foreground font-medium">
+                Koda povabila
+              </Label>
+              <Input
+                id="inviteCode"
+                name="inviteCode"
+                placeholder="npr. INVITE-123"
+                value={formData.inviteCode}
+                onChange={handleChange}
+                required
+                className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-accent h-12 rounded-xl"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="accent"
               size="xl" 
               className="w-full"
               disabled={isSubmitting}
@@ -169,9 +185,9 @@ export const BetaSignupSection = () => {
                 </>
               )}
             </Button>
-            
+
             <p className="text-center text-primary-foreground/60 text-sm">
-              S prijavo se strinjate z obdelavo vaših podatkov za namen beta programa.
+              Registracija je možna samo s kodo povabila. S prijavo se strinjate z obdelavo vaših podatkov za namen beta programa.
             </p>
           </form>
         </div>

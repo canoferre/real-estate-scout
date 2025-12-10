@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, UserPlus, MapPin, ShieldCheck, Sparkles, BadgeEuro, LogIn } from "lucide-react";
+import { UserPlus, MapPin, ShieldCheck, Sparkles, BadgeEuro, LogIn } from "lucide-react";
 
 export const HeroSection = () => {
   const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
@@ -89,7 +89,7 @@ export const HeroSection = () => {
                 className="group min-w-[220px] shadow-lg shadow-accent/30"
               >
                 <UserPlus className="w-5 h-5" />
-                Ustvari račun (beta)
+                Zahtevaj povabilo (beta)
               </Button>
               <Button
                 variant="outline"
@@ -97,40 +97,8 @@ export const HeroSection = () => {
                 onClick={scrollToSignup}
                 className="group min-w-[220px] border-2 bg-background/70 backdrop-blur-sm hover:bg-background/90"
               >
-                Prijavi se
+                Prijavi se z vabilom
                 <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-              <Button
-                variant="outline"
-                size="xl"
-                asChild
-                className="group min-w-[220px] border-2 bg-background/70 backdrop-blur-sm hover:bg-background/90"
-              >
-                <a href={googleAuthUrl} aria-label="Prijava z Google računom">
-                  <span className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 bg-white rounded-sm">
-                      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-3.5 h-3.5">
-                        <path
-                          fill="#EA4335"
-                          d="M12 10.2v3.6h5.1c-.2 1.2-.8 2.2-1.7 2.9l2.7 2.1c1.6-1.5 2.6-3.7 2.6-6.3 0-.6-.1-1.2-.2-1.8H12z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M6.6 14.3l-.9.7-2.1 1.6C5.4 19.9 8.5 22 12 22c2.4 0 4.4-.8 5.9-2.2l-2.7-2.1c-.7.5-1.6.8-2.7.8-2 0-3.8-1.3-4.4-3.1z"
-                        />
-                        <path
-                          fill="#4A90E2"
-                          d="M3.6 7.4 6.3 9.6c.6-1.8 2.4-3.1 4.4-3.1 1.3 0 2.5.4 3.4 1.3l2.6-2.6C15.9 3.3 14 2.6 12 2.6c-3.5 0-6.6 2.1-8.1 5z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="m12 10.2 2.8-2.2c-.4-.3-1-.6-1.7-.6-2 0-3.8 1.3-4.4 3.1l-2.7-2.2c-.3.6-.5 1.3-.5 2 0 .7.2 1.4.5 2l2.7-2.2c.6-1.8 2.4-3.1 4.4-3.1.7 0 1.3.2 1.7.6z"
-                        />
-                      </svg>
-                    </span>
-                    Prijava z Google
-                  </span>
-                </a>
               </Button>
             </div>
 
@@ -146,6 +114,10 @@ export const HeroSection = () => {
               <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-secondary/70 border border-border">
                 <ShieldCheck className="w-4 h-4 text-accent" />
                 Varno in zasebno
+              </span>
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-secondary/70 border border-border">
+                <Sparkles className="w-4 h-4 text-accent" />
+                Registracija možna samo z vabilom
               </span>
             </div>
           </div>
