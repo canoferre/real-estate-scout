@@ -16,6 +16,8 @@ export const BetaSignupSection = () => {
     inviteCode: "",
   });
 
+  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -56,6 +58,39 @@ export const BetaSignupSection = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6 bg-primary-foreground/5 p-8 rounded-3xl border border-primary-foreground/10">
+            <Button
+              variant="outline"
+              size="lg"
+              asChild
+              className="w-full border-2 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              <a href={googleAuthUrl} aria-label="Prijava v beta program z Google računom">
+                <span className="flex items-center gap-3 justify-center">
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-white rounded-sm">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4">
+                      <path
+                        fill="#EA4335"
+                        d="M12 10.2v3.6h5.1c-.2 1.2-.8 2.2-1.7 2.9l2.7 2.1c1.6-1.5 2.6-3.7 2.6-6.3 0-.6-.1-1.2-.2-1.8H12z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M6.6 14.3l-.9.7-2.1 1.6C5.4 19.9 8.5 22 12 22c2.4 0 4.4-.8 5.9-2.2l-2.7-2.1c-.7.5-1.6.8-2.7.8-2 0-3.8-1.3-4.4-3.1z"
+                      />
+                      <path
+                        fill="#4A90E2"
+                        d="M3.6 7.4 6.3 9.6c.6-1.8 2.4-3.1 4.4-3.1 1.3 0 2.5.4 3.4 1.3l2.6-2.6C15.9 3.3 14 2.6 12 2.6c-3.5 0-6.6 2.1-8.1 5z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="m12 10.2 2.8-2.2c-.4-.3-1-.6-1.7-.6-2 0-3.8 1.3-4.4 3.1l-2.7-2.2c-.3.6-.5 1.3-.5 2 0 .7.2 1.4.5 2l2.7-2.2c.6-1.8 2.4-3.1 4.4-3.1.7 0 1.3.2 1.7.6z"
+                      />
+                    </svg>
+                  </span>
+                  Nadaljuj z Google
+                </span>
+              </a>
+            </Button>
+
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-primary-foreground font-medium">

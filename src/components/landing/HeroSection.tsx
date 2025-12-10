@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, MapPin, ShieldCheck, Sparkles, BadgeEuro, LogIn } from "lucide-react";
 
 export const HeroSection = () => {
+  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
+
   const scrollToSignup = () => {
     document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
