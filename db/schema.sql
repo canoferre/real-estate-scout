@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS offers (
   city TEXT,
   district TEXT,
   source TEXT,
-  url TEXT,
+  url TEXT UNIQUE,
+  img_url TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
