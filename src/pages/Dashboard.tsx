@@ -424,6 +424,56 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
           )}
         </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
+                />
+              </svg>
+              <span>AI ocena posla</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-primary"
+              onClick={() => onEvaluate(offer)}
+              disabled={isEvaluating}
+              aria-label="Pridobi AI oceno"
+            >
+              <span
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
+                  isEvaluating ? 'opacity-70' : ''
+                }`}
+              >
+                {isEvaluating ? (
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  'AI'
+                )}
+              </span>
+            </Button>
+          </div>
+
+          {insight && (
+            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+                  AI
+                </div>
+                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <Button
@@ -653,10 +703,11 @@ export default function Dashboard() {
     );
   });
 
-  const bestOffers = getBestOffers(filteredOffers, 3);
-  const remainingOffers = filteredOffers.filter((offer) => !bestOffers.some((best) => best.id === offer.id));
-  const latestOffers = remainingOffers.slice(0, 6);
   const savedOffers = priceFilteredOffers.filter((offer) => savedOfferIds.includes(offer.id));
+  const availableOffers = filteredOffers.filter((offer) => !savedOfferIds.includes(offer.id));
+  const bestOffers = getBestOffers(availableOffers, 3);
+  const remainingOffers = availableOffers.filter((offer) => !bestOffers.some((best) => best.id === offer.id));
+  const latestOffers = remainingOffers.slice(0, 6);
 
   return (
     <>
