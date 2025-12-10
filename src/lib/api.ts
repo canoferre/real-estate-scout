@@ -9,7 +9,7 @@ export interface Offer {
   district: string;
   source: string;
   url: string;
-  img_url?: string | null;
+  img_url?: string;
   created_at?: string;
 }
 
