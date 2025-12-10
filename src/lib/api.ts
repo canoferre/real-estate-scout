@@ -48,8 +48,11 @@ export interface SearchProfile {
 }
 
 // Offers API
-export async function fetchOffers(): Promise<Offer[]> {
-  const res = await fetch(`${API_URL}/api/offers`);
+export async function fetchOffers(searchTerm?: string): Promise<Offer[]> {
+  const query = searchTerm?.trim()
+    ? `?q=${encodeURIComponent(searchTerm.trim())}`
+    : "";
+  const res = await fetch(`${API_URL}/api/offers${query}`);
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
     throw new Error(error.error || "Napaka pri nalaganju oglasov");

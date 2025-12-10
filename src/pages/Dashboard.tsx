@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -474,6 +474,56 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
           )}
         </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
+                />
+              </svg>
+              <span>AI ocena posla</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-primary"
+              onClick={() => onEvaluate(offer)}
+              disabled={isEvaluating}
+              aria-label="Pridobi AI oceno"
+            >
+              <span
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
+                  isEvaluating ? 'opacity-70' : ''
+                }`}
+              >
+                {isEvaluating ? (
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  'AI'
+                )}
+              </span>
+            </Button>
+          </div>
+
+          {insight && (
+            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
+                  AI
+                </div>
+                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <Button
@@ -506,6 +556,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const activeProfile = useMemo(
+    () => profiles.find((profile) => profile.id === activeProfileId) || profiles[0],
+    [profiles, activeProfileId]
+  );
+
   // Zaščita strani
   useEffect(() => {
     if (!isAuthenticated) {
@@ -516,8 +571,9 @@ export default function Dashboard() {
   // Naloži oglase
   useEffect(() => {
     async function loadOffers() {
+      setIsLoading(true);
       try {
-        const data = await fetchOffers();
+        const data = await fetchOffers(activeProfile?.searchTerm);
         setOffers(data);
         setError(null);
       } catch (err) {
@@ -540,7 +596,129 @@ export default function Dashboard() {
       setProfiles(storedProfiles);
       setActiveProfileId(storedProfiles[0]?.id ?? null);
     }
-  }, [isAuthenticated, toast]);
+  }, [isAuthenticated, toast, activeProfile?.searchTerm]);
+
+  const handleToggleSave = (offer: Offer) => {
+    setSavedOfferIds((current) => {
+      const isAlreadySaved = current.includes(offer.id);
+      const updated = isAlreadySaved ? removeSavedOffer(offer.id) : saveOffer(offer.id);
+
+      toast({
+        title: isAlreadySaved ? 'Odstranjeno iz shranjenih' : 'Shranjeno',
+        description: isAlreadySaved
+          ? 'Oglas je bil odstranjen iz shranjenih.'
+          : 'Oglas je shranjen med priljubljene.',
+      });
+
+      return updated;
+    });
+  };
+
+  const persistProfiles = (nextProfiles: SearchProfile[]) => {
+    const sanitized = saveSearchProfiles(nextProfiles);
+    setProfiles(sanitized);
+
+    if (sanitized.length && !sanitized.some((profile) => profile.id === activeProfileId)) {
+      setActiveProfileId(sanitized[0].id);
+    }
+  };
+
+  const handleProfileChange = (id: string) => {
+    setActiveProfileId(id);
+  };
+
+  const handleProfileFieldChange = (id: string, field: keyof SearchProfile, value: string | number | undefined) => {
+    setProfiles((current) => {
+      const updated = current.map((profile) =>
+        profile.id === id
+          ? {
+              ...profile,
+              [field]: typeof value === 'string' ? value : value ?? undefined,
+            }
+          : profile
+      );
+
+      saveSearchProfiles(updated);
+      return updated;
+    });
+  };
+
+  const handleAddProfile = () => {
+    setProfiles((current) => {
+      const nextIndex = current.length + 1;
+      const newProfile: SearchProfile = {
+        id: `profil-${Date.now()}`,
+        name: `Profil ${nextIndex}`,
+        searchTerm: '',
+        city: '',
+        district: '',
+        source: '',
+        priorities: '',
+      };
+
+      const updated = [...current, newProfile];
+      saveSearchProfiles(updated);
+      setActiveProfileId(newProfile.id);
+      return updated;
+    });
+  };
+
+  const handleDeleteProfile = (id: string) => {
+    setProfiles((current) => {
+      if (current.length === 1) {
+        toast({
+          title: 'Ni mogoče izbrisati',
+          description: 'Vsaj en profil mora ostati.',
+          variant: 'destructive',
+        });
+        return current;
+      }
+
+      const updated = current.filter((profile) => profile.id !== id);
+      persistProfiles(updated);
+      return updated;
+    });
+  };
+
+  const handleEvaluateOffer = async (offer: Offer) => {
+    setInsightLoading((prev) => ({ ...prev, [offer.id]: true }));
+
+    try {
+      const summary = await getOfferInsight(offer);
+      setInsights((prev) => ({ ...prev, [offer.id]: summary }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI ocena ni uspela';
+      toast({
+        title: 'AI ocena ni uspela',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setInsightLoading((prev) => ({ ...prev, [offer.id]: false }));
+    }
+  };
+
+  const handleProfileInsight = async (profile: SearchProfile) => {
+    setProfileInsightLoading(true);
+
+    try {
+      const summary = await getProfileInsight(profile);
+      setProfiles((current) => {
+        const updated = current.map((item) => (item.id === profile.id ? { ...item, aiSummary: summary } : item));
+        saveSearchProfiles(updated);
+        return updated;
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI povzetek profila ni uspel';
+      toast({
+        title: 'AI povzetek profila ni uspel',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setProfileInsightLoading(false);
+    }
+  };
 
   const handleToggleSave = (offer: Offer) => {
     setSavedOfferIds((current) => {
@@ -667,8 +845,6 @@ export default function Dashboard() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const activeProfile = profiles.find((profile) => profile.id === activeProfileId) || profiles[0];
 
   const normalizedSearch = (activeProfile?.searchTerm || '').trim().toLowerCase();
   const priceFilteredOffers = offers.filter((offer) => Number.isFinite(offer.price) && offer.price >= 5000);
