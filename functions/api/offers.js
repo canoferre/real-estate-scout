@@ -25,21 +25,28 @@ export async function onRequest({ env, request }) {
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get('q')?.trim().toLowerCase();
 
-    let query = `SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at
-                 FROM offers`;
+    // Pick only one (latest) row per URL so the dashboard never renders duplicate cards or AI sections
+    // when the source table contains multiple entries for the same listing.
     const params = [];
+    const baseWhere = searchTerm
+      ? `WHERE LOWER(title || ' ' || city || ' ' || district || ' ' || source) LIKE ?`
+      : '';
 
     if (searchTerm) {
-      query += `\n       WHERE LOWER(title || ' ' || city || ' ' || district || ' ' || source) LIKE ?`;
       params.push(`%${searchTerm}%`);
     }
 
-    query += `\n       ORDER BY datetime(created_at) DESC`;
-
-    // Keep the default response lighter, but search queries should span the full dataset
-    if (!searchTerm) {
-      query += `\n       LIMIT 400`;
-    }
+    const query = `WITH ranked_offers AS (
+                     SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at,
+                            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(url)) ORDER BY datetime(created_at) DESC, id DESC) AS row_num
+                     FROM offers
+                     ${baseWhere}
+                   )
+                   SELECT id, title, price, area_m2, city, district, source, url, img_url, created_at
+                   FROM ranked_offers
+                   WHERE row_num = 1
+                   ORDER BY datetime(created_at) DESC
+                   ${searchTerm ? '' : 'LIMIT 400'}`;
 
     const statement = params.length ? env.DB.prepare(query).bind(...params) : env.DB.prepare(query);
 
