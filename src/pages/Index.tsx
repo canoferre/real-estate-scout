@@ -19,10 +19,23 @@ import {
 } from "@/components/ui/carousel";
 
 const heroImages = [
-  "https://images.unsplash.com/photo-1600596542815-e32c265a3111?q=80&w=2000&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2000&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2000&auto=format&fit=crop",
+  {
+    id: "herobackground1",
+    src: "https://images.unsplash.com/photo-1600596542815-e32c265a3111?q=80&w=2000&auto=format&fit=crop",
+    alt: "Modern living room with floor-to-ceiling windows",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2000&auto=format&fit=crop",
+    alt: "Luxury villa exterior at dusk",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop",
+    alt: "Bright modern apartment interior",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2000&auto=format&fit=crop",
+    alt: "Contemporary home facade with greenery",
+  },
 ];
 
 const Index = () => {
@@ -57,8 +70,13 @@ const Index = () => {
                   <CarouselItem key={index} className="pl-0 h-full">
                     <div className="w-full h-full relative">
                       <img
-                        src={image}
-                        alt={`Hero background ${index + 1}`}
+                        id={index === 0 ? image.id : undefined}
+                        src={image.src}
+                        alt={image.alt}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        onError={(event) => {
+                          event.currentTarget.src = "/placeholder.svg";
+                        }}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-background/85 backdrop-blur-[1px]" />
