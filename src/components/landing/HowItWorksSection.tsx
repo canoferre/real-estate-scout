@@ -40,48 +40,49 @@ const steps = [
 
 export const HowItWorksSection = () => {
   return (
-    <section className="py-28 bg-background">
+    <section className="py-28 bg-gradient-to-b from-background via-secondary/40 to-background">
       <div className="container px-6">
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 border border-border/70">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            Preprosto in učinkovito
+            Pot do popolne nepremičnine
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
             Kako deluje
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Tri preprosti koraki do vaše sanjske nepremičnine
+            Od prve želje do prvega ogleda – Skavt vodi celoten proces
           </p>
         </div>
-        
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {steps.map((step, index) => (
-            <div 
-              key={index}
-              className="group relative p-8 rounded-2xl bg-secondary/50 border border-border hover:border-accent/40 transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
-            >
-              {/* Step number */}
-              <span className="absolute top-6 right-6 text-7xl font-black text-accent/10 group-hover:text-accent/20 transition-colors">
-                {step.number}
-              </span>
-              
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent group-hover:text-accent-foreground text-accent transition-all duration-300">
-                {step.icon}
+
+        <div className="relative max-w-6xl mx-auto">
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border to-transparent pointer-events-none" />
+          <div className="grid md:grid-cols-2 gap-8">
+            {steps.map((step, index) => (
+              <div
+                key={index}
+                className="group relative p-8 rounded-3xl bg-background border border-border/70 shadow-xl shadow-black/5 overflow-hidden"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-accent/5 via-transparent to-primary/5" />
+
+                <div className="flex items-start gap-4 relative z-10">
+                  <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-all duration-300">
+                    {step.icon}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="px-2 py-1 rounded-full bg-secondary/70 border border-border/70 font-semibold text-accent">{step.number}</span>
+                      <span className="uppercase tracking-[0.2em] text-xs">Korak</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
               </div>
-              
-              {/* Content */}
-              <h3 className="text-xl font-bold text-foreground mb-3">
-                {step.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {step.description}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
