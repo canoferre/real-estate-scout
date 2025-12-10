@@ -565,6 +565,47 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
           )}
         </div>
+
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
+                />
+              </svg>
+              <span>AI ocena posla</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-primary"
+              onClick={() => onEvaluate(offer)}
+              disabled={isEvaluating}
+              aria-label="Pridobi AI oceno"
+            >
+              {isEvaluating ? (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
+                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide">
+                  AI
+                </span>
+              )}
+            </Button>
+          </div>
+
+          {insight && (
+            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
+              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <Button
@@ -615,7 +656,21 @@ export default function Dashboard() {
       setIsLoading(true);
       try {
         const data = await fetchOffers(activeProfile?.searchTerm);
-        const uniqueOffers = Array.from(new Map(data.map((offer) => [offer.id, offer])).values());
+
+        const uniqueOffers = Array.from(
+          data.reduce((map, offer) => {
+            const urlKey = offer.url?.trim().toLowerCase();
+            const dedupeKey = urlKey || `id-${offer.id}`;
+
+            if (!map.has(dedupeKey)) {
+              map.set(dedupeKey, offer);
+            }
+
+            return map;
+          }, new Map<string, Offer>())
+            .values()
+        );
+
         setOffers(uniqueOffers);
         setError(null);
       } catch (err) {
