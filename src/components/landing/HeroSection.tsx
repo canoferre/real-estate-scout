@@ -1,14 +1,43 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Send, MapPin, ShieldCheck, Sparkles, BadgeEuro } from "lucide-react";
+import { ArrowRight, UserPlus, MapPin, ShieldCheck, Sparkles, BadgeEuro, LogIn } from "lucide-react";
 
 export const HeroSection = () => {
   const scrollToSignup = () => {
     document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const openTelegram = () => {
-    window.open("https://t.me/nepremicninskiskavt_bot", "_blank");
-  };
+  const stats = [
+    { label: "Obveščeni v", value: "< 60 sekund" },
+    { label: "Spremljanih portalov", value: "7" },
+    { label: "Aktivnih filtrov", value: "250+" },
+  ];
+
+  const featuredListings = [
+    {
+      title: "Moderno stanovanje s teraso",
+      price: "389.000 €",
+      location: "Ljubljana - Vič",
+      image:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop",
+      tag: "Novo na trgu",
+    },
+    {
+      title: "Hiša z vrtom in garažo",
+      price: "520.000 €",
+      location: "Maribor - Studenci",
+      image:
+        "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?q=80&w=1600&auto=format&fit=crop",
+      tag: "Ekskluzivno",
+    },
+    {
+      title: "Svetlo 2-sobno stanovanje",
+      price: "265.000 €",
+      location: "Koper - Center",
+      image:
+        "https://images.unsplash.com/photo-1460472178825-e5240623afd5?q=80&w=1600&auto=format&fit=crop",
+      tag: "Obalno",
+    },
+  ];
 
   const stats = [
     { label: "Obveščeni v", value: "< 60 sekund" },
@@ -87,11 +116,11 @@ export const HeroSection = () => {
               <Button
                 variant="hero"
                 size="xl"
-                onClick={openTelegram}
+                onClick={scrollToSignup}
                 className="group min-w-[220px] shadow-lg shadow-accent/30"
               >
-                <Send className="w-5 h-5" />
-                Zaženi Telegram bota
+                <UserPlus className="w-5 h-5" />
+                Ustvari račun (beta)
               </Button>
               <Button
                 variant="outline"
@@ -99,8 +128,8 @@ export const HeroSection = () => {
                 onClick={scrollToSignup}
                 className="group min-w-[220px] border-2 bg-background/70 backdrop-blur-sm hover:bg-background/90"
               >
-                Prijavi se v beta
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                Prijavi se
+                <LogIn className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
 
