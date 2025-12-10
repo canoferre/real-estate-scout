@@ -14,6 +14,7 @@ interface IncomingListing {
   size_m2?: number | null;
   url?: string;
   first_seen?: string; // "YYYY-MM-DD HH:MM:SS"
+  image_url?: string | null; // 🔹 novo polje iz scraperja
 }
 
 /**
@@ -45,6 +46,7 @@ export async function onRequestGet() {
  *   district TEXT,
  *   source TEXT,
  *   url TEXT,
+ *   img_url TEXT,                -- 🔹 NOV STOLPEC
  *   created_at TEXT DEFAULT CURRENT_TIMESTAMP
  * );
  *
@@ -74,14 +76,23 @@ export async function onRequestPost(context: {
       });
     }
 
-    let inserted = 0;
+    let insertedOrUpdated = 0;
 
-    // Pripravimo statement (uporabimo ga večkrat)
+    // Pripravimo UPSERT statement (posodobi, če URL že obstaja)
     const stmt = env.DB.prepare(
       `
-      INSERT OR IGNORE INTO offers
-        (title, price, area_m2, city, district, source, url, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+      INSERT INTO offers
+        (title, price, area_m2, city, district, source, url, img_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+      ON CONFLICT(url) DO UPDATE SET
+        title    = excluded.title,
+        price    = excluded.price,
+        area_m2  = excluded.area_m2,
+        city     = excluded.city,
+        district = excluded.district,
+        source   = excluded.source,
+        img_url  = COALESCE(excluded.img_url, offers.img_url)
+        -- created_at pustimo tak, kot je (čas prvega vnosa)
     `,
     );
 
@@ -111,19 +122,31 @@ export async function onRequestPost(context: {
         const url = item.url;
         const created_at = item.first_seen ?? null;
 
+        // 🔹 image_url iz scraperja → img_url v offers
+        const img_url = item.image_url ?? null;
+
         await stmt
-          .bind(title, price, area_m2, city, district, source, url, created_at)
+          .bind(
+            title,
+            price,
+            area_m2,
+            city,
+            district,
+            source,
+            url,
+            img_url,
+            created_at,
+          )
           .run();
 
-        // INSERT OR IGNORE: če je url že v bazi, se nič ne vstavi – to je OK.
-        inserted += 1;
+        insertedOrUpdated += 1;
       } catch (e) {
-        console.error("Insert error for item/url:", item?.url, e);
+        console.error("Insert/Upsert error for item/url:", item?.url, e);
         // nadaljuj z naslednjim oglasom
       }
     }
 
-    return new Response(JSON.stringify({ inserted }), {
+    return new Response(JSON.stringify({ processed: insertedOrUpdated }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
