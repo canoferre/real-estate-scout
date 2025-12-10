@@ -26,8 +26,8 @@ export async function onRequest({ env, request }) {
     const searchTerm = searchParams.get('q')?.trim().toLowerCase();
 
     // Pick only one (latest) row per listing. Some imports lack a URL, so we also fall back to a normalized
-    // title/city/district key to avoid duplicates that would otherwise render multiple "AI ocena posla" rows
-    // for the same property card on the dashboard.
+    // title/city/district key to avoid duplicates that would otherwise render multiple cards for the same listing
+    // on the dashboard.
     const params = [];
     const baseWhere = searchTerm
       ? `WHERE LOWER(title || ' ' || city || ' ' || district || ' ' || source) LIKE ?`

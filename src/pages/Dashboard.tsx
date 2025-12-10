@@ -13,7 +13,6 @@ import {
   loadSavedOffers,
   saveOffer,
   removeSavedOffer,
-  getOfferInsight,
   SearchProfile,
   loadSearchProfiles,
   saveSearchProfiles,
@@ -26,22 +25,54 @@ type OfferCardProps = {
   offer: Offer;
   isSaved: boolean;
   onToggleSave: (offer: Offer) => void;
-  insight?: string;
-  isEvaluating?: boolean;
-  onEvaluate: (offer: Offer) => void;
 };
 
-function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEvaluate }: OfferCardProps) {
+type StatCardProps = {
+  title: string;
+  value: string;
+  helper?: string;
+  icon: JSX.Element;
+  accent?: 'primary' | 'accent' | 'muted';
+};
+
+function StatCard({ title, value, helper, icon, accent = 'primary' }: StatCardProps) {
+  const accentClasses = {
+    primary: 'from-primary/10 via-background to-background border-primary/20',
+    accent: 'from-accent/10 via-background to-background border-accent/30',
+    muted: 'from-muted/40 via-background to-background border-border/70',
+  }[accent];
+
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${accentClasses} p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{title}</p>
+          <p className="text-2xl font-semibold text-foreground">{value}</p>
+          {helper && <p className="text-sm text-muted-foreground">{helper}</p>}
+        </div>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background/70 text-foreground/80 shadow-inner">
+          {icon}
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
+    </div>
+  );
+}
+
+function OfferCard({ offer, isSaved, onToggleSave }: OfferCardProps) {
   const pricePerM2 = calculatePricePerM2(offer.price, offer.area_m2);
   const imageUrl = offer.img_url?.trim();
   const formattedPrice = offer.price ? formatPrice(offer.price) : '—';
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 hover:border-accent/50 hover:shadow-lg transition-all duration-300">
+    <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg">
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-accent/5 via-transparent to-primary/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="relative mb-4 overflow-hidden rounded-xl border border-border bg-muted">
         <div className="aspect-[4/3]">
           {imageUrl ? (
-            <img src={imageUrl} alt={offer.title} className="h-full w-full object-cover" />
+            <img src={imageUrl} alt={offer.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground/70">
               <svg
@@ -63,632 +94,81 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
             </div>
           )}
         </div>
-        <div className="absolute bottom-3 left-3 rounded-full bg-background/80 px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
-          {offer.city}
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          <span className="rounded-full bg-background/80 px-3 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
+            {offer.city}
+          </span>
+          {offer.district && (
+            <span className="rounded-full bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
+              {offer.district}
+            </span>
+          )}
         </div>
+        {pricePerM2 ? (
+          <div className="absolute bottom-3 right-3 rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold shadow-lg">
+            {formatPrice(pricePerM2)} / m²
+          </div>
+        ) : null}
       </div>
 
-      <div className="flex justify-between items-start gap-3 mb-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-foreground line-clamp-2">{offer.title}</h3>
-          <span className="text-xs inline-flex mt-1 px-2 py-1 rounded-full bg-muted text-muted-foreground capitalize shrink-0">
-            {offer.source}
-          </span>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h3 className="line-clamp-2 font-semibold text-foreground">{offer.title}</h3>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 capitalize">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm0 0v9" />
+              </svg>
+              {offer.source}
+            </span>
+            {offer.created_at && <span className="text-[11px] text-muted-foreground/80">{new Date(offer.created_at).toLocaleDateString('sl-SI')}</span>}
+          </div>
         </div>
         <Button
           variant={isSaved ? 'default' : 'ghost'}
           size="icon"
-          className={`shrink-0 ${isSaved ? 'bg-accent text-accent-foreground' : ''}`}
+          className={`shrink-0 rounded-full ${isSaved ? 'bg-accent text-accent-foreground' : ''}`}
           onClick={() => onToggleSave(offer)}
           aria-label={isSaved ? 'Odstrani iz shranjenih' : 'Shrani nepremičnino'}
         >
           {isSaved ? (
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M5 4a2 2 0 00-2 2v15l9-4 9 4V6a2 2 0 00-2-2H5z" />
             </svg>
           ) : (
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 00-2 2v13l9-4 9 4V7a2 2 0 00-2-2H5z" />
             </svg>
           )}
         </Button>
       </div>
-      
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+
+      <div className="mb-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657 13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           </svg>
-          <span className="text-muted-foreground">
-            {offer.city}{offer.district ? `, ${offer.district}` : ''}
+          <span>
+            {offer.city}
+            {offer.district ? `, ${offer.district}` : ''}
           </span>
         </div>
-        
-        <div className="flex items-center justify-between">
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-4">
             <span className="text-lg font-semibold text-foreground">{formattedPrice}</span>
             <span className="text-sm text-muted-foreground">{offer.area_m2} m²</span>
           </div>
-        </div>
-
-        {/* AI ocena */}
-        <div className="pt-2 border-t border-border/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
               </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary h-8 w-8"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[10px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
+              {offer.source}
+            </span>
+            {pricePerM2 && <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">{formatPrice(pricePerM2)} / m²</span>}
           </div>
-
-          {insight && (
-            <div className="mt-3 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-3 shadow-sm">
-              <div className="flex items-start gap-2">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary/70">AI ocena posla</p>
-                  <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              <span
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide ${
-                  isEvaluating ? 'opacity-70' : ''
-                }`}
-              >
-                {isEvaluating ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                    <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  'AI'
-                )}
-              </span>
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide">
-                  AI
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              {isEvaluating ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide">
-                  AI
-                </span>
-              )}
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              {isEvaluating ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide">
-                  AI
-                </span>
-              )}
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          {/* A single AI control per card; insights are keyed by offer ID so duplicates cannot appear */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              {isEvaluating ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide">
-                  AI
-                </span>
-              )}
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 space-y-2">
-          {/* A single AI control per card; insights are keyed by offer ID so duplicates cannot appear */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3l1.902 5.858H20l-4.951 3.596L16.951 18 12 14.82 7.049 18l1.902-5.546L4 8.858h6.098L12 3z"
-                />
-              </svg>
-              <span>AI ocena posla</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-primary"
-              onClick={() => onEvaluate(offer)}
-              disabled={isEvaluating}
-              aria-label="Pridobi AI oceno"
-            >
-              {isEvaluating ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-                  <path className="opacity-75" d="M4 12a8 8 0 018-8" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background text-[11px] font-semibold uppercase tracking-wide">
-                  AI
-                </span>
-              )}
-            </Button>
-          </div>
-
-          {insight && (
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm">
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{insight}</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -699,8 +179,8 @@ function OfferCard({ offer, isSaved, insight, isEvaluating, onToggleSave, onEval
         onClick={() => window.open(offer.url, '_blank')}
       >
         Odpri oglas
-        <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
         </svg>
       </Button>
     </div>
@@ -715,8 +195,6 @@ export default function Dashboard() {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [profilesOpen, setProfilesOpen] = useState(false);
   const [savedOfferIds, setSavedOfferIds] = useState<number[]>([]);
-  const [insights, setInsights] = useState<Record<number, string>>({});
-  const [insightLoading, setInsightLoading] = useState<Record<number, boolean>>({});
   const [profileInsightLoading, setProfileInsightLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -756,7 +234,7 @@ export default function Dashboard() {
             const urlKey = normalizeUrl(offer.url);
             const dedupeKey = urlKey || normalizeFallbackKey(offer) || `id-${offer.id}`;
 
-            // Keep only one card per listing so the AI block renders a single time, even if the import lacks a URL.
+            // Keep only one card per listing to avoid duplicate entries when URLs are missing.
             if (!map.has(dedupeKey)) {
               map.set(dedupeKey, offer);
             }
@@ -871,24 +349,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleEvaluateOffer = async (offer: Offer) => {
-    setInsightLoading((prev) => ({ ...prev, [offer.id]: true }));
-
-    try {
-      const summary = await getOfferInsight(offer);
-      setInsights((prev) => ({ ...prev, [offer.id]: summary }));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'AI ocena ni uspela';
-      toast({
-        title: 'AI ocena ni uspela',
-        description: message,
-        variant: 'destructive',
-      });
-    } finally {
-      setInsightLoading((prev) => ({ ...prev, [offer.id]: false }));
-    }
-  };
-
   const handleProfileInsight = async (profile: SearchProfile) => {
     setProfileInsightLoading(true);
 
@@ -915,13 +375,9 @@ export default function Dashboard() {
     return null;
   }
 
-  const normalizedSearch = (activeProfile?.searchTerm || '').trim().toLowerCase();
   const priceFilteredOffers = offers.filter((offer) => Number.isFinite(offer.price) && offer.price >= 5000);
 
   const filteredOffers = priceFilteredOffers.filter((offer) => {
-    const haystack = `${offer.title} ${offer.city} ${offer.district} ${offer.source}`.toLowerCase();
-
-    const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
     const matchesCity = activeProfile?.city
       ? offer.city.toLowerCase().includes(activeProfile.city.toLowerCase())
       : true;
@@ -937,7 +393,6 @@ export default function Dashboard() {
     const matchesMaxArea = activeProfile?.maxArea ? offer.area_m2 <= activeProfile.maxArea : true;
 
     return (
-      matchesSearch &&
       matchesCity &&
       matchesDistrict &&
       matchesSource &&
@@ -954,42 +409,94 @@ export default function Dashboard() {
   const remainingOffers = availableOffers.filter((offer) => !bestOffers.some((best) => best.id === offer.id));
   const latestOffers = remainingOffers.slice(0, 6);
 
+  const statCards = [
+    {
+      title: 'Zadetki',
+      value: filteredOffers.length.toString(),
+      helper: 'Rezultati po trenutnih filtrih',
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" />
+        </svg>
+      ),
+      accent: 'primary' as const,
+    },
+    {
+      title: 'Shranjene',
+      value: savedOffers.length.toString(),
+      helper: 'Oglasi, ki jih spremljate',
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 0 0-2 2v13l9-4 9 4V7a2 2 0 0 0-2-2H5Z" />
+        </svg>
+      ),
+      accent: 'accent' as const,
+    },
+    {
+      title: 'Najboljše',
+      value: bestOffers.length.toString(),
+      helper: 'Najugodnejši €/m²',
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m7-11-7 7-7-7" />
+        </svg>
+      ),
+      accent: 'muted' as const,
+    },
+  ];
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background pt-20 pb-12">
+      <main className="min-h-screen bg-background bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.08),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.06),transparent_28%)] pt-20 pb-12">
         <div className="container mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="mb-10 space-y-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Trenutne ponudbe</h1>
-                <p className="text-muted-foreground text-lg">
-                  Ustvari več iskalnih profilov z lastnimi filtri, prioritetami in AI povzetki.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => setProfilesOpen((open) => !open)}
-                  aria-expanded={profilesOpen}
-                  aria-controls="profiles-panel"
-                >
-                  <svg
-                    className={`h-4 w-4 transition-transform ${profilesOpen ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden
+          <div className="mb-10 space-y-8">
+            <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-background via-background to-primary/5 p-6 shadow-sm">
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.12),transparent_30%)]" />
+              <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Nadzorna plošča</p>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Trenutne ponudbe</h1>
+                  <p className="text-muted-foreground text-base sm:text-lg max-w-2xl">
+                    Hitro preglejte najnovejše oglase, shranite priljubljene in najdite najboljše priložnosti glede na svoje filtre.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={() => setProfilesOpen((open) => !open)}
+                    aria-expanded={profilesOpen}
+                    aria-controls="profiles-panel"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                  <span className="font-semibold">Iskalni profili</span>
-                </Button>
+                    <svg
+                      className={`h-4 w-4 transition-transform ${profilesOpen ? 'rotate-180' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9 12 16 5 9" />
+                    </svg>
+                    <span className="font-semibold">Iskalni profili</span>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleAddProfile} className="flex items-center gap-2">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14" />
+                    </svg>
+                    Nov profil
+                  </Button>
+                </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {statCards.map((stat) => (
+                <StatCard key={stat.title} {...stat} />
+              ))}
             </div>
 
             {activeProfile && profilesOpen && (
@@ -1320,9 +827,6 @@ export default function Dashboard() {
                         offer={offer}
                         isSaved
                         onToggleSave={handleToggleSave}
-                        insight={insights[offer.id]}
-                        isEvaluating={insightLoading[offer.id]}
-                        onEvaluate={handleEvaluateOffer}
                       />
                     ))}
                   </div>
@@ -1350,9 +854,6 @@ export default function Dashboard() {
                         offer={offer}
                         isSaved={savedOfferIds.includes(offer.id)}
                         onToggleSave={handleToggleSave}
-                        insight={insights[offer.id]}
-                        isEvaluating={insightLoading[offer.id]}
-                        onEvaluate={handleEvaluateOffer}
                       />
                     ))}
                   </div>
@@ -1379,9 +880,6 @@ export default function Dashboard() {
                       offer={offer}
                       isSaved={savedOfferIds.includes(offer.id)}
                       onToggleSave={handleToggleSave}
-                      insight={insights[offer.id]}
-                      isEvaluating={insightLoading[offer.id]}
-                      onEvaluate={handleEvaluateOffer}
                     />
                   ))}
                 </div>
