@@ -229,23 +229,6 @@ export function removeSavedOffer(offerId: number): number[] {
   return updated;
 }
 
-// AI ocena posla
-export async function getOfferInsight(offer: Offer): Promise<string> {
-  const res = await fetch(`${API_URL}/api/deal-insight`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ offer }),
-  });
-
-  const data: DealInsightResponse & { error?: string } = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "AI ocena trenutno ni na voljo");
-  }
-
-  return data.summary;
-}
-
 export async function getProfileInsight(profile: SearchProfile): Promise<string> {
   const res = await fetch(`${API_URL}/api/deal-insight`, {
     method: "POST",

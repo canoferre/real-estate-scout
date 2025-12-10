@@ -21,6 +21,13 @@ export async function onRequest({ request, env }) {
     }
 
     const { offer, profile } = body;
+
+    if (offer) {
+      return new Response(
+        JSON.stringify({ error: 'AI ocena posla ni več na voljo.' }),
+        { status: 410, headers: corsHeaders }
+      );
+    }
     const groqApiKey = env.GROQ_API_KEY;
     const groqModel = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
