@@ -15,6 +15,8 @@ export const BetaSignupSection = () => {
     propertyType: "",
   });
 
+  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -61,7 +63,7 @@ export const BetaSignupSection = () => {
               asChild
               className="w-full border-2 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
             >
-              <a href="/auth/google" aria-label="Prijava v beta program z Google računom">
+              <a href={googleAuthUrl} aria-label="Prijava v beta program z Google računom">
                 <span className="flex items-center gap-3 justify-center">
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-white rounded-sm">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4">

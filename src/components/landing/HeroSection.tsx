@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, UserPlus, MapPin, ShieldCheck, Sparkles, BadgeEuro, LogIn } from "lucide-react";
 
 export const HeroSection = () => {
+  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
+
   const scrollToSignup = () => {
     document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -104,7 +106,7 @@ export const HeroSection = () => {
                 asChild
                 className="group min-w-[220px] border-2 bg-background/70 backdrop-blur-sm hover:bg-background/90"
               >
-                <a href="/auth/google" aria-label="Prijava z Google računom">
+                <a href={googleAuthUrl} aria-label="Prijava z Google računom">
                   <span className="flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-5 h-5 bg-white rounded-sm">
                       <svg viewBox="0 0 24 24" aria-hidden="true" className="w-3.5 h-3.5">

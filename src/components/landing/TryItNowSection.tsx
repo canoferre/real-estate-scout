@@ -17,6 +17,8 @@ const steps = [
 ];
 
 export const TryItNowSection = () => {
+  const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL || "/api/auth/google";
+
   const scrollToSignup = () => {
     document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -77,7 +79,7 @@ export const TryItNowSection = () => {
                 asChild
                 className="border-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 min-w-[240px]"
               >
-                <a href="/auth/google" aria-label="Registracija z Google računom">
+                <a href={googleAuthUrl} aria-label="Registracija z Google računom">
                   <span className="flex items-center gap-2 justify-center">
                     <span className="inline-flex items-center justify-center w-5 h-5 bg-white rounded-sm">
                       <svg viewBox="0 0 24 24" aria-hidden="true" className="w-3.5 h-3.5">
