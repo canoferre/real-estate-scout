@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Send, ArrowRight } from "lucide-react";
+import { ArrowRight, UserPlus, ClipboardList } from "lucide-react";
 
 const steps = [
   {
     step: "1",
-    text: "Odprite Telegram in poiščite @nepremicninskiskavt_bot",
+    text: "Izpolnite svoj e-poštni naslov in želje",
   },
   {
     step: "2",
-    text: "Sledite preprostim navodilom in nastavite svoje kriterije",
+    text: "Potrdite prijavo in nastavite kriterije",
   },
   {
     step: "3",
@@ -17,24 +17,24 @@ const steps = [
 ];
 
 export const TryItNowSection = () => {
-  const openTelegram = () => {
-    window.open("https://t.me/nepremicninskiskavt_bot", "_blank");
+  const scrollToSignup = () => {
+    document.getElementById("signup")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section className="py-28 bg-gradient-hero">
+    <section id="try-it-now" className="py-28 bg-gradient-hero">
       <div className="container px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
-              <Send className="w-4 h-4" />
-              Preizkusite zdaj
+              <UserPlus className="w-4 h-4" />
+              Registrirajte se zdaj
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5">
               Začnite v 30 sekundah
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Brez registracije, brez čakanja – takoj začnite prejemati obvestila o novih oglasih
+              Ustvarite račun, nastavite kriterije in začnite prejemati prilagojena obvestila o novih oglasih.
             </p>
           </div>
           
@@ -59,18 +59,18 @@ export const TryItNowSection = () => {
           
           {/* CTA */}
           <div className="text-center">
-            <Button 
-              variant="hero" 
-              size="xl" 
-              onClick={openTelegram}
+            <Button
+              variant="hero"
+              size="xl"
+              onClick={scrollToSignup}
               className="group min-w-[280px]"
             >
-              <Send className="w-5 h-5" />
-              Odpri Telegram bota
+              <ClipboardList className="w-5 h-5" />
+              Prijavi se na obvestila
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <p className="text-sm text-muted-foreground mt-4">
-              Popolnoma brezplačno • Telegram račun potreben
+              Popolnoma brezplačno • Brezplačen dostop v beta fazi
             </p>
           </div>
         </div>
