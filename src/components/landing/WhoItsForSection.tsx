@@ -44,11 +44,11 @@ const audiences = [
 
 export const WhoItsForSection = () => {
   return (
-    <section className="py-28 bg-gradient-hero">
+    <section className="py-28 bg-gradient-to-b from-secondary/30 via-background to-background">
       <div className="container px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4 border border-border/70">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -57,32 +57,28 @@ export const WhoItsForSection = () => {
               </svg>
               Idealno za
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Za koga je Skavt
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Idealen za vse, ki cenijo svoj čas in želijo prednost pred drugimi iskalci
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Od prvih kupcev do zahtevnih investitorjev – Skavt prilagodi obveščanje vašim ciljem in tempiranju nakupa.
             </p>
           </div>
-          
-          <div className="grid sm:grid-cols-2 gap-6">
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {audiences.map((audience, index) => (
-              <div 
+              <div
                 key={index}
-                className="flex items-start gap-5 p-6 rounded-2xl bg-background border border-border hover:border-accent/40 transition-all duration-300 hover:shadow-lg"
+                className="group h-full rounded-2xl border border-border bg-background/80 backdrop-blur-sm p-5 shadow-lg shadow-black/5 hover:-translate-y-1 hover:border-accent/60 transition-all duration-300"
               >
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
-                  {audience.icon}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-all">
+                    {audience.icon}
+                  </div>
+                  <Check className="w-5 h-5 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-foreground mb-1">
-                    {audience.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {audience.text}
-                  </p>
-                </div>
-                <Check className="flex-shrink-0 w-6 h-6 text-accent mt-1" />
+                <h3 className="text-lg font-bold text-foreground mb-2">{audience.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{audience.text}</p>
               </div>
             ))}
           </div>
